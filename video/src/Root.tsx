@@ -16,7 +16,7 @@ export const RemotionRoot: React.FC = () => (
       fps={30}
       width={1920}
       height={1080}
-      defaultProps={{lang: 'ru' as const, withMusic: false}}
+      defaultProps={{lang: 'ru' as const, withMusic: true}}
     />
     <Composition
       id="En"
@@ -25,7 +25,7 @@ export const RemotionRoot: React.FC = () => (
       fps={30}
       width={1920}
       height={1080}
-      defaultProps={{lang: 'en' as const, withMusic: false}}
+      defaultProps={{lang: 'en' as const, withMusic: true}}
     />
     <Composition
       id="RuTall"
@@ -34,7 +34,7 @@ export const RemotionRoot: React.FC = () => (
       fps={30}
       width={1080}
       height={1920}
-      defaultProps={{lang: 'ru' as const, withMusic: false}}
+      defaultProps={{lang: 'ru' as const, withMusic: true}}
     />
     <Composition
       id="EnTall"
@@ -43,7 +43,7 @@ export const RemotionRoot: React.FC = () => (
       fps={30}
       width={1080}
       height={1920}
-      defaultProps={{lang: 'en' as const, withMusic: false}}
+      defaultProps={{lang: 'en' as const, withMusic: true}}
     />
   </>
 );

@@ -1,3 +1,6 @@
 node_modules
 out
+
+# Дорожка собирается из music.py за секунду: мегабайт в истории ни к чему.
 public/music.mp3
+public/music.wav
