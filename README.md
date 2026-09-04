@@ -40,7 +40,13 @@ Two thirds of the paid output is not in the answer. Hark stores reasoning tokens
 
 ![Output tokens by day, reasoning apart](screenshots/04-analytics.png)
 
-## Tools
+## Connections
+
+Your own API and your database live on the Connections tab, which is also what opens first when you enter a bot. You pick the kind before the form, with two buttons, so no irrelevant fields are ever on screen.
+
+![Connections](screenshots/08-connections.png)
+
+The Check button calls the connection for real and shows what came back. A typo in a connection string surfaces here rather than mid-conversation with a visitor.
 
 **HTTP.** Any endpoint. Method, URL template with `{placeholders}`, headers, body. Arguments the model produces are substituted into the path and the query.
 
@@ -127,14 +133,6 @@ Theme values land directly in the widget's CSS, so they are cleaned in one place
 
 The frame on the right runs the widget itself rather than a mock-up. It loads the same file and the same settings endpoint the site gets, so it has no way to drift from the live thing.
 
-## Connections
-
-Your own API and your database live on the Connections tab, which is also what opens first when you enter a bot. You pick the kind before the form, with two buttons, so no irrelevant fields are ever on screen.
-
-![Connections](screenshots/08-connections.png)
-
-The Check button calls the connection for real and shows what came back. A typo in a connection string surfaces here rather than mid-conversation with a visitor.
-
 ## Install
 
 ```bash
@@ -148,7 +146,7 @@ Then open `http://localhost:8080`. The binary carries the admin UI, the template
 To look around first:
 
 ```bash
-./hark -demo     # a shop, two tools, four conversations with receipts
+./hark -demo     # a shop, two connections, four conversations with receipts
 ```
 
 The demo seeds without an API key and spends nothing: the receipts are recorded, not generated.

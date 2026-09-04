@@ -40,7 +40,13 @@ Zwei Drittel der bezahlten Ausgabe stehen nicht in der Antwort. Hark führt die 
 
 ![Ausgabe-Token pro Tag, Denken getrennt](screenshots/04-analytics.png)
 
-## Werkzeuge
+## Anbindungen
+
+Eigene API und Datenbank liegen im Reiter „Anbindungen“, der auch als Erstes aufgeht, wenn man einen Bot öffnet. Die Art wird vor dem Formular gewählt, mit zwei Schaltflächen, damit nie überflüssige Felder auf dem Schirm stehen.
+
+![Anbindungen](screenshots/08-connections.png)
+
+Die Schaltfläche „Prüfen“ ruft die Anbindung wirklich auf und zeigt, was zurückkam. Ein Tippfehler in der Verbindungszeichenfolge fällt hier auf und nicht mitten im Gespräch mit einem Besucher.
 
 **HTTP.** Beliebige Adresse. Methode, Vorlage mit `{Platzhaltern}`, Kopfzeilen, Rumpf. Die Argumente des Modells werden in Pfad und Abfrage eingesetzt.
 
@@ -127,14 +133,6 @@ Werte des Themas landen direkt im CSS des Widgets und werden deshalb an einer St
 
 Im Rahmen rechts läuft das Widget selbst, kein Entwurf — dieselbe Datei und derselbe Endpunkt für die Einstellungen, die auch die Seite bekommt. Auseinanderlaufen kann da nichts.
 
-## Anbindungen
-
-Eigene API und Datenbank liegen im Reiter „Anbindungen“, der auch als Erstes aufgeht, wenn man einen Bot öffnet. Die Art wird vor dem Formular gewählt, mit zwei Schaltflächen, damit nie überflüssige Felder auf dem Schirm stehen.
-
-![Anbindungen](screenshots/08-connections.png)
-
-Die Schaltfläche „Prüfen“ ruft die Anbindung wirklich auf und zeigt, was zurückkam. Ein Tippfehler in der Verbindungszeichenfolge fällt hier auf und nicht mitten im Gespräch mit einem Besucher.
-
 ## Installation
 
 ```bash
@@ -148,7 +146,7 @@ Dann `http://localhost:8080` öffnen. Oberfläche, Vorlagen und Widget stecken i
 Zum Umsehen:
 
 ```bash
-./hark -demo     # ein Laden, zwei Werkzeuge, vier Gespräche mit Belegen
+./hark -demo     # ein Laden, zwei Anbindungen, vier Gespräche mit Belegen
 ```
 
 Die Demo läuft ohne API-Schlüssel und kostet nichts: Die Belege sind aufgezeichnet, nicht erzeugt.
