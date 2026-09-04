@@ -79,7 +79,8 @@ func (s *Server) botConnections(w http.ResponseWriter, r *http.Request) {
 	s.botPage(w, r, bot, "connections", "bot-connections.html", map[string]any{
 		"Tools":     list,
 		"Installed": widgetSnippet(r, bot.Slug),
-		"Checked":   r.URL.Query().Get("checked"),
+		"CheckOK":   r.URL.Query().Get("checked") == "ok",
+		"Checked":   r.URL.Query().Get("checked") != "",
 		"CheckText": r.URL.Query().Get("text"),
 	})
 }
@@ -158,7 +159,7 @@ func (s *Server) connectionSave(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if problem := validateTool(tool); problem != "" {
+	if problem := validateTool(language(r), tool); problem != "" {
 		back := fmt.Sprintf("/bots/%d/connections/new?kind=%s&error=%s",
 			bot.ID, tool.Kind, url.QueryEscape(problem))
 		if tool.ID != 0 {
@@ -189,47 +190,47 @@ func (s *Server) connectionSave(w http.ResponseWriter, r *http.Request) {
 }
 
 // validateTool возвращает понятную человеку причину отказа или пустую строку.
-func validateTool(t *store.Tool) string {
+func validateTool(code string, t *store.Tool) string {
 	if t.Name == "" {
-		return "Не задано имя: по нему модель зовёт подключение"
+		return lang.T(code, "Не задано имя: по нему модель зовёт подключение")
 	}
 	if strings.ContainsAny(t.Name, " \t") {
-		return "В имени нельзя ставить пробелы: модель зовёт его как функцию"
+		return lang.T(code, "В имени нельзя ставить пробелы: модель зовёт его как функцию")
 	}
 	if t.Description == "" {
-		return "Опишите, что делает подключение: это описание читает модель, чтобы решить, когда его звать"
+		return lang.T(code, "Опишите, что делает подключение: это описание читает модель, чтобы решить, когда его звать")
 	}
 	if t.Headers != "" {
 		var probe map[string]string
 		if err := json.Unmarshal([]byte(t.Headers), &probe); err != nil {
-			return "Заголовки должны быть объектом JSON: " + err.Error()
+			return lang.T(code, "Заголовки должны быть объектом JSON: ") + err.Error()
 		}
 	}
 	if t.Parameters != "" {
 		var probe map[string]any
 		if err := json.Unmarshal([]byte(t.Parameters), &probe); err != nil {
-			return "Схема параметров должна быть объектом JSON: " + err.Error()
+			return lang.T(code, "Схема параметров должна быть объектом JSON: ") + err.Error()
 		}
 	}
 
 	switch t.Kind {
 	case "http":
 		if t.URL == "" {
-			return "Не задан адрес"
+			return lang.T(code, "Не задан адрес")
 		}
 		parsed, err := url.Parse(t.URL)
 		if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") {
-			return "Адрес должен начинаться с http:// или https://"
+			return lang.T(code, "Адрес должен начинаться с http:// или https://")
 		}
 	case "sql":
 		if t.DSN == "" {
-			return "Не задана строка подключения"
+			return lang.T(code, "Не задана строка подключения")
 		}
 		if t.AllowedTables == "" {
-			return "Перечислите разрешённые таблицы: без списка подключение не работает вовсе"
+			return lang.T(code, "Перечислите разрешённые таблицы: без списка подключение не работает вовсе")
 		}
 	default:
-		return "Неизвестный вид подключения"
+		return lang.T(code, "Неизвестный вид подключения")
 	}
 	return ""
 }
@@ -259,8 +260,8 @@ func (s *Server) connectionCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status, text := "ошибка", ""
-	runner, err := tools.Build(tool)
+	status, text := "fail", ""
+	runner, err := tools.Build(tool, bot.LangOr())
 	if err != nil {
 		text = err.Error()
 	} else {
@@ -285,7 +286,7 @@ func (s *Server) connectionCheck(w http.ResponseWriter, r *http.Request) {
 		case result.Status == "отклонён" || strings.HasPrefix(result.Status, "ошибка"):
 			text = result.Response
 		default:
-			status = "ок"
+			status = "ok"
 			text = result.Status + " · " + truncateText(result.Response, 220)
 		}
 	}
@@ -323,7 +324,10 @@ func (s *Server) botAnswers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.botPage(w, r, bot, "answers", "bot-answers.html", map[string]any{
-		"Notify":    notify.ParseTarget(bot.Notify),
+		"Notify": notify.ParseTarget(bot.Notify),
+		// Состояние передаётся отдельно от подписи: сравнивать исход со
+		// словом на живом языке — верный способ сломать его переводом.
+		"TestedOK":  r.URL.Query().Get("ok") == "1",
 		"BotLang":   bot.LangOr(),
 		"LangTitle": lang.Title,
 		"Tested":    r.URL.Query().Get("tested"),
@@ -355,11 +359,15 @@ func (s *Server) notifyTest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	event := s.notifyEvent(r, bot, nil, "проверка настройки из админки", true)
-	status := s.Notify.Send(target, event)
+	status, err := s.Notify.Send(target, event)
 	_ = s.DB.NoteNotify(r.Context(), bot.ID, status)
 
-	http.Redirect(w, r, fmt.Sprintf("/bots/%d/answers?tested=%s",
-		bot.ID, url.QueryEscape(status)), http.StatusSeeOther)
+	ok := "0"
+	if err == nil {
+		ok = "1"
+	}
+	http.Redirect(w, r, fmt.Sprintf("/bots/%d/answers?ok=%s&tested=%s",
+		bot.ID, ok, url.QueryEscape(status)), http.StatusSeeOther)
 }
 
 func targetFromForm(r *http.Request) notify.Target {
@@ -538,7 +546,7 @@ func (s *Server) botWidgetPreview(w http.ResponseWriter, r *http.Request) {
 		// эта страница обходит, потому что рисуется без общей обвязки.
 		"L": language(r),
 	}); err != nil {
-		http.Error(w, "ошибка шаблона: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "ошибка шаблона: ")+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -550,7 +558,7 @@ func (s *Server) botWidgetPreview(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) saveAndBack(w http.ResponseWriter, r *http.Request, bot *store.Bot, tab string) {
 	if err := s.DB.SaveBot(r.Context(), bot); err != nil {
-		http.Error(w, "не удалось сохранить: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "не удалось сохранить: ")+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, fmt.Sprintf("/bots/%d/%s", bot.ID, tab), http.StatusSeeOther)

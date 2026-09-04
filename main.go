@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dripips/hark/internal/lang"
 	"github.com/dripips/hark/internal/store"
 	"github.com/dripips/hark/internal/web"
 )
@@ -35,41 +36,49 @@ func main() {
 	reset := flag.Bool("reset", false, "сменить пароль существующему менеджеру")
 	list := flag.Bool("managers", false, "показать заведённых менеджеров")
 	demo := flag.Bool("demo", false, "наполнить демонстрационными данными")
+	// Язык командной строки и демонстрации. Админку каждый менеджер
+	// переключает себе сам, а здесь менеджера ещё нет.
+	code := flag.String("lang", envOr("HARK_LANG", lang.Source), "язык сообщений: ru, en")
 	flag.Parse()
+
+	L := lang.Pick(*code)
+	if err := lang.Err(); err != nil {
+		log.Fatalf("словари: %v", err)
+	}
 
 	db, err := store.Open(*dbPath)
 	if err != nil {
-		log.Fatalf("база: %v", err)
+		log.Fatalf(lang.T(L, "база: %v"), err)
 	}
 	defer db.Close()
 
 	if *list {
-		if err := listManagers(db); err != nil {
-			log.Fatalf("менеджеры: %v", err)
+		if err := listManagers(db, L); err != nil {
+			log.Fatalf(lang.T(L, "менеджеры: %v"), err)
 		}
 		return
 	}
 
 	if *manager != "" {
 		if *password == "" {
-			log.Fatal("нужен -password")
+			log.Fatal(lang.T(L, "нужен -password"))
 		}
-		if err := addManager(db, *manager, *password, *reset); err != nil {
-			log.Fatalf("менеджер: %v", err)
+		if err := addManager(db, L, *manager, *password, *reset); err != nil {
+			log.Fatalf(lang.T(L, "менеджер: %v"), err)
 		}
 		return
 	}
 
 	if *demo {
-		if err := seedDemo(db); err != nil {
-			log.Fatalf("демонстрация: %v", err)
+		if err := seedDemo(db, L); err != nil {
+			log.Fatalf(lang.T(L, "демонстрация: %v"), err)
 		}
 		return
 	}
 
 	server, err := web.New(db)
 	if err != nil {
-		log.Fatalf("сервер: %v", err)
+		log.Fatalf(lang.T(L, "сервер: %v"), err)
 	}
 
 	httpServer := &http.Server{
@@ -88,9 +97,9 @@ func main() {
 	httpServer.RegisterOnShutdown(server.Hub.Close)
 
 	go func() {
-		log.Printf("Hark слушает %s, база %s", *addr, *dbPath)
+		log.Printf(lang.T(L, "Hark слушает %s, база %s"), *addr, *dbPath)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("сервер: %v", err)
+			log.Fatalf(lang.T(L, "сервер: %v"), err)
 		}
 	}()
 
@@ -103,7 +112,7 @@ func main() {
 	_ = httpServer.Shutdown(ctx)
 	// Последний зов наружу успевает уйти: пять секунд и не дольше.
 	server.Notify.Close()
-	log.Println("остановлен")
+	log.Println(lang.T(L, "остановлен"))
 }
 
 // addManager заводит человека или, если попросили явно, меняет ему пароль.
@@ -112,7 +121,7 @@ func main() {
 // почтой молча менял человеку пароль. Команда выглядела как «завести
 // менеджера», а на деле выбивала из админки того, кто там уже работал, —
 // и ничего об этом не говорила. Теперь перезапись требует -reset.
-func addManager(db *store.DB, email, password string, reset bool) error {
+func addManager(db *store.DB, L, email, password string, reset bool) error {
 	ctx := context.Background()
 	email = store.NormalizeEmail(email)
 
@@ -124,43 +133,43 @@ func addManager(db *store.DB, email, password string, reset bool) error {
 	if reset {
 		existing, err := db.ManagerByEmail(ctx, email)
 		if err != nil {
-			return fmt.Errorf("менеджера %s нет: заведите его без -reset", email)
+			return fmt.Errorf(lang.T(L, "менеджера %s нет: заведите его без -reset"), email)
 		}
 		// Прошлые сессии гасим все: -reset зовут в том числе тогда, когда
 		// доступ увели, и оставить чужую печеньку живой значит не помочь.
 		if err := db.SetManagerPassword(ctx, existing.ID, hash, ""); err != nil {
 			return err
 		}
-		fmt.Printf("пароль %s изменён, прошлые входы погашены\n", email)
+		fmt.Printf(lang.T(L, "пароль %s изменён, прошлые входы погашены")+"\n", email)
 		return nil
 	}
 
 	if _, err := db.CreateManager(ctx, email, email, hash); err != nil {
 		if errors.Is(err, store.ErrManagerExists) {
-			return fmt.Errorf("менеджер %s уже заведён. "+
-				"Сменить ему пароль: -manager %s -password новый -reset", email, email)
+			return fmt.Errorf(lang.T(L, "менеджер %s уже заведён. "+
+				"Сменить ему пароль: -manager %s -password новый -reset"), email, email)
 		}
 		return err
 	}
-	fmt.Printf("менеджер %s заведён\n", email)
+	fmt.Printf(lang.T(L, "менеджер %s заведён")+"\n", email)
 	return nil
 }
 
 // listManagers нужен для восстановления: прежде чем менять кому-то пароль,
 // стоит увидеть, кто вообще заведён.
-func listManagers(db *store.DB) error {
+func listManagers(db *store.DB, L string) error {
 	managers, err := db.Managers(context.Background())
 	if err != nil {
 		return err
 	}
 	if len(managers) == 0 {
-		fmt.Println("менеджеров нет: заведите первого через -manager и -password")
+		fmt.Println(lang.T(L, "менеджеров нет: заведите первого через -manager и -password"))
 		return nil
 	}
 	for _, m := range managers {
-		seen := "ни разу не заходил"
+		seen := lang.T(L, "ни разу не заходил")
 		if m.LastSeen.Valid {
-			seen = "заходил " + m.LastSeen.String
+			seen = lang.T(L, "заходил") + " " + m.LastSeen.String
 		}
 		fmt.Printf("%-32s %-24s %s\n", m.Email, m.Name, seen)
 	}

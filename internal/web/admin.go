@@ -84,7 +84,7 @@ func (s *Server) botCreate(w http.ResponseWriter, r *http.Request) {
 		Enabled:       true,
 	}
 	if err := s.DB.SaveBot(r.Context(), bot); err != nil {
-		http.Error(w, "не удалось создать бота: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "не удалось создать бота: ")+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/bots/"+strconv.FormatInt(bot.ID, 10), http.StatusSeeOther)
@@ -130,7 +130,7 @@ func (s *Server) botProbe(w http.ResponseWriter, r *http.Request) {
 	encoded, _ := json.Marshal(caps)
 	bot.Capabilities = string(encoded)
 	if err := s.DB.SaveBot(ctx, bot); err != nil {
-		http.Error(w, "не удалось сохранить пробу", http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "не удалось сохранить пробу"), http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/bots/"+strconv.FormatInt(bot.ID, 10), http.StatusSeeOther)
@@ -208,7 +208,7 @@ func (s *Server) conversationReply(w http.ResponseWriter, r *http.Request) {
 	if err := s.DB.AddMessage(r.Context(), &store.Message{
 		ConversationID: id, Role: "human", Text: text, Author: managerName(r),
 	}); err != nil {
-		http.Error(w, "не удалось отправить", http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "не удалось отправить"), http.StatusInternalServerError)
 		return
 	}
 	// Ответил человек — разговор остаётся за человеком, пока его не вернут боту.
@@ -263,7 +263,7 @@ func (s *Server) analytics(w http.ResponseWriter, r *http.Request) {
 		WHERE r.created_at >= date('now', ?)
 		GROUP BY d ORDER BY d DESC`, "-"+strconv.Itoa(days)+" days")
 	if err != nil {
-		http.Error(w, "ошибка выборки", http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "ошибка выборки"), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()

@@ -37,7 +37,7 @@ func (s *Server) widgetCORS(next http.Handler) http.Handler {
 						}
 					}
 					if allowed == "" {
-						http.Error(w, "домен не разрешён", http.StatusForbidden)
+						http.Error(w, lang.T(language(r), "домен не разрешён"), http.StatusForbidden)
 						return
 					}
 				}
@@ -96,7 +96,7 @@ func widgetBody() ([]byte, []byte) {
 func (s *Server) widgetScript(w http.ResponseWriter, r *http.Request) {
 	plain, packed := widgetBody()
 	if plain == nil {
-		http.Error(w, "виджет не найден", http.StatusNotFound)
+		http.Error(w, lang.T(language(r), "виджет не найден"), http.StatusNotFound)
 		return
 	}
 
@@ -117,7 +117,7 @@ func (s *Server) widgetScript(w http.ResponseWriter, r *http.Request) {
 func (s *Server) widgetConfig(w http.ResponseWriter, r *http.Request) {
 	bot, err := s.DB.BotBySlug(r.Context(), botSlug(r))
 	if err != nil || !bot.Enabled {
-		http.Error(w, "бот недоступен", http.StatusNotFound)
+		http.Error(w, lang.T(language(r), "бот недоступен"), http.StatusNotFound)
 		return
 	}
 	// Предпросмотр в админке присылает несохранённую тему и подменяет ей
@@ -162,7 +162,7 @@ func (s *Server) widgetConfig(w http.ResponseWriter, r *http.Request) {
 func (s *Server) widgetStart(w http.ResponseWriter, r *http.Request) {
 	bot, err := s.DB.BotBySlug(r.Context(), botSlug(r))
 	if err != nil || !bot.Enabled {
-		http.Error(w, "бот недоступен", http.StatusNotFound)
+		http.Error(w, lang.T(language(r), "бот недоступен"), http.StatusNotFound)
 		return
 	}
 
@@ -177,7 +177,7 @@ func (s *Server) widgetStart(w http.ResponseWriter, r *http.Request) {
 		PageURL: trim(body.PageURL, 500), Visitor: trim(body.Visitor, 120),
 	}
 	if err := s.DB.CreateConversation(r.Context(), conv); err != nil {
-		http.Error(w, "не удалось начать разговор", http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "не удалось начать разговор"), http.StatusInternalServerError)
 		return
 	}
 	if bot.Greeting != "" {
@@ -198,12 +198,12 @@ func (s *Server) widgetSend(w http.ResponseWriter, r *http.Request) {
 		Text  string `json:"text"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "плохой запрос", http.StatusBadRequest)
+		http.Error(w, lang.T(language(r), "плохой запрос"), http.StatusBadRequest)
 		return
 	}
 	text := strings.TrimSpace(body.Text)
 	if text == "" {
-		http.Error(w, "пустая реплика", http.StatusBadRequest)
+		http.Error(w, lang.T(language(r), "пустая реплика"), http.StatusBadRequest)
 		return
 	}
 	if len(text) > 4000 {
@@ -212,19 +212,19 @@ func (s *Server) widgetSend(w http.ResponseWriter, r *http.Request) {
 
 	conv, err := s.DB.ConversationByToken(r.Context(), body.Token)
 	if err != nil {
-		http.Error(w, "разговор не найден", http.StatusNotFound)
+		http.Error(w, lang.T(language(r), "разговор не найден"), http.StatusNotFound)
 		return
 	}
 	bot, err := s.DB.BotByID(r.Context(), conv.BotID)
 	if err != nil {
-		http.Error(w, "бот не найден", http.StatusNotFound)
+		http.Error(w, lang.T(language(r), "бот не найден"), http.StatusNotFound)
 		return
 	}
 
 	if err := s.DB.AddMessage(r.Context(), &store.Message{
 		ConversationID: conv.ID, Role: "user", Text: text,
 	}); err != nil {
-		http.Error(w, "не удалось сохранить", http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "не удалось сохранить"), http.StatusInternalServerError)
 		return
 	}
 
@@ -235,7 +235,7 @@ func (s *Server) widgetSend(w http.ResponseWriter, r *http.Request) {
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		http.Error(w, "поток не поддерживается", http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "поток не поддерживается"), http.StatusInternalServerError)
 		return
 	}
 
@@ -282,14 +282,14 @@ func (s *Server) widgetSend(w http.ResponseWriter, r *http.Request) {
 func (s *Server) widgetPoll(w http.ResponseWriter, r *http.Request) {
 	conv, err := s.DB.ConversationByToken(r.Context(), r.URL.Query().Get("token"))
 	if err != nil {
-		http.Error(w, "разговор не найден", http.StatusNotFound)
+		http.Error(w, lang.T(language(r), "разговор не найден"), http.StatusNotFound)
 		return
 	}
 	after, _ := strconv.ParseInt(r.URL.Query().Get("after"), 10, 64)
 
 	messages, err := s.DB.Messages(r.Context(), conv.ID)
 	if err != nil {
-		http.Error(w, "ошибка чтения", http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "ошибка чтения"), http.StatusInternalServerError)
 		return
 	}
 	var fresh []map[string]any
@@ -495,6 +495,7 @@ func (s *Server) notifyEvent(r *http.Request, bot *store.Bot, conv *store.Conver
 	reason string, test bool) notify.Event {
 
 	event := notify.Event{
+		Lang:  bot.LangOr(),
 		BotID: bot.ID, BotName: bot.Name, BotSlug: bot.Slug,
 		Reason: reason, At: time.Now(), Test: test,
 	}

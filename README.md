@@ -4,7 +4,7 @@ A self-hosted AI chat bot for your site, where every answer carries a receipt.
 
 [Русский](README.ru.md) · [Deutsch](README.de.md)
 
-![The receipt behind an answer](screenshots/01-receipt.png)
+![The receipt behind an answer](screenshots/en/01-receipt.png)
 
 ## What it is
 
@@ -22,7 +22,7 @@ Providers disagree about what they accept, and the disagreement is not in the do
 
 So Hark asks. One button sends a few tiny requests and records what came back:
 
-![Model settings driven by the probe](screenshots/11-model.png)
+![Model settings driven by the probe](screenshots/en/11-model.png)
 
 The settings then show only the knobs that model actually takes. Nothing else is offered, and nothing rejected is ever sent.
 
@@ -38,13 +38,13 @@ Thinking models spend tokens you never see. Measured on a real conversation thro
 
 Two thirds of the paid output is not in the answer. Hark stores reasoning tokens in their own column and shows the share on the conversation and in analytics, because a cost report that folds them into "completion" is not wrong so much as useless.
 
-![Output tokens by day, reasoning apart](screenshots/04-analytics.png)
+![Output tokens by day, reasoning apart](screenshots/en/04-analytics.png)
 
 ## Connections
 
 Your own API and your database live on the Connections tab, which is also what opens first when you enter a bot. You pick the kind before the form, with two buttons, so no irrelevant fields are ever on screen.
 
-![Connections](screenshots/08-connections.png)
+![Connections](screenshots/en/08-connections.png)
 
 The Check button calls the connection for real and shows what came back. A typo in a connection string surfaces here rather than mid-conversation with a visitor.
 
@@ -67,7 +67,7 @@ A rejected query is not swallowed: it goes into the receipt, so you can see the 
 
 The bot gives up through a tool call, not through phrase matching. It says so explicitly, the reason travels to the queue, and the conversation moves to *waiting*. The manager sees the reason and the whole receipt before typing a word.
 
-![The queue](screenshots/03-inbox.png)
+![The queue](screenshots/en/03-inbox.png)
 
 ## When the bot gives up
 
@@ -75,17 +75,17 @@ The conversation joins a queue for a human, and you find out two ways at once.
 
 An open admin tab gets the event over a stream: the count in the header grows, the tab title becomes "(3) Overview", a short sound plays. Nothing to configure; it works out of the box. The event carries the whole queue rather than "one more", so a dropped event, a sleeping laptop and a server restart all heal themselves.
 
-![The waiting queue in the header](screenshots/17-queue-badge.png)
+![The waiting queue in the header](screenshots/en/17-queue-badge.png)
 
 If nobody is keeping the admin open, Hark calls one address that you filled in yourself. There is no Telegram and no email inside Hark, and there won't be: Telegram is what you get by pasting `api.telegram.org/bot<token>/sendMessage`, and email is what you get by running your own bridge next to it. The button beside the field places a real call and shows you what came back.
 
-![Where to report](screenshots/18-notify.png)
+![Where to report](screenshots/en/18-notify.png)
 
 What leaves the machine is the fact, not the conversation: the bot, the reason, the queue depth and a link into the admin. The reason is written by the model and may paraphrase the visitor, so a "no reason" box leaves only the count and the link.
 
 A waiting conversation has an owner. The "I'll take it" button marks it as yours, and colleagues see the name in the list itself — before they start typing, rather than after the visitor has received two answers from two people. Taking it is atomic: two simultaneous clicks produce exactly one winner, and the other person sees who got there first.
 
-![Who took the conversation](screenshots/20-claim.png)
+![Who took the conversation](screenshots/en/20-claim.png)
 
 Anyone can release it, not just whoever took it: people go to lunch, and locking a visitor behind someone who left is the worst thing available. A manager's reply takes the conversation automatically if it was free; handing it back to the bot or closing it clears the mark.
 
@@ -95,7 +95,7 @@ Recording an escalation no longer depends on the visitor's request still being a
 
 Who signs into the admin and answers when the bot gives up. There are no roles: everyone sees every conversation and can remove anyone else.
 
-![Managers](screenshots/15-managers.png)
+![Managers](screenshots/en/15-managers.png)
 
 You cannot remove yourself, and you cannot remove the last manager: nobody could sign in afterwards, and recovery would need access to the machine. Changing a password kills that person's other sessions, because the reason you change one is often that someone else has it.
 
@@ -121,7 +121,7 @@ One tag on your page:
 
 Every part of the widget is optional. Fill in nothing and you get a bare feed with an input; fill in everything and you get a round launcher, a welcome screen with ready-made questions, and a footnote linking to your privacy page.
 
-![The widget on someone else's site](screenshots/05-widget.png)
+![The widget on someone else's site](screenshots/en/05-widget.png)
 
 Origins are restricted per bot. An empty list means any site.
 
@@ -129,9 +129,9 @@ Origins are restricted per bot. An empty list means any site.
 
 Font, spacing, colours and background live on the Appearance tab: a font list including "same as the site", type size and leading, three densities, panel dimensions, corner radii, shadow or hairline border, the palette, and a feed background as a solid colour, gradient, dots, grid or image. Five presets set everything at once.
 
-![Appearance studio](screenshots/10-widget-studio.png)
+![Appearance studio](screenshots/en/10-widget-studio.png)
 
-![A themed widget on a real site](screenshots/14-widget-live.png)
+![A themed widget on a real site](screenshots/en/14-widget-live.png)
 
 You set three colours and the rest follow: muted text, hairlines and the bot bubble are derived from the surface and the text colour, and the label on a filled button is picked by contrast. Clearing the "auto" box takes a colour back under manual control.
 

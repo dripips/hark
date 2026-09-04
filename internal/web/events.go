@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dripips/hark/internal/lang"
 	"github.com/dripips/hark/internal/store"
 )
 
@@ -184,14 +185,14 @@ func (s *Server) notifyQueue(r *http.Request) {
 func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		http.Error(w, "поток не поддерживается", http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "поток не поддерживается"), http.StatusInternalServerError)
 		return
 	}
 
 	id, sub, ok := s.Hub.add()
 	if !ok {
 		// Мест нет: вкладка переходит на опрос сама, увидев этот ответ.
-		http.Error(w, "слишком много открытых вкладок", http.StatusServiceUnavailable)
+		http.Error(w, lang.T(language(r), "слишком много открытых вкладок"), http.StatusServiceUnavailable)
 		return
 	}
 	defer s.Hub.drop(id)

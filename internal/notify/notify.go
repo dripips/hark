@@ -24,11 +24,16 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/dripips/hark/internal/lang"
 )
 
 // Event — то, что случилось. Переписки здесь нет никогда: наружу уходит факт
 // и ссылка, а читать разговор нужно в админке.
 type Event struct {
+	// Lang — язык, на котором писать исход. Берётся у бота: строку читает
+	// владелец на странице этого же бота.
+	Lang     string
 	BotID    int64
 	BotName  string
 	BotSlug  string
@@ -167,31 +172,39 @@ func (s *Sender) allow(botID int64) bool {
 
 // Send звонит прямо сейчас и рассказывает, что вышло. Нужен кнопке проверки:
 // человек нажал и должен увидеть исход, а не строчку в журнале.
-func (s *Sender) Send(target Target, event Event) string {
-	return s.deliver(target, event)
+//
+// Отдаёт и текст, и ошибку: по тексту нельзя судить об успехе, он переводится.
+func (s *Sender) Send(target Target, event Event) (string, error) {
+	return s.deliverWithErr(target, event)
 }
 
 // deliver делает две попытки. Адрес, не ответивший дважды с промежутком в
 // пять секунд, лежит, и десять повторов этого не изменят.
 func (s *Sender) deliver(target Target, event Event) string {
+	status, _ := s.deliverWithErr(target, event)
+	return status
+}
+
+func (s *Sender) deliverWithErr(target Target, event Event) (string, error) {
 	var last string
+	var lastErr error
 	for attempt := 0; attempt < 2; attempt++ {
 		if attempt > 0 {
 			time.Sleep(5 * time.Second)
 		}
 		status, err := s.attempt(target, event)
 		if err == nil {
-			return status
+			return status, nil
 		}
-		last = status
+		last, lastErr = status, err
 	}
-	return last
+	return last, lastErr
 }
 
 func (s *Sender) attempt(target Target, event Event) (string, error) {
 	address, body, err := build(target, event)
 	if err != nil {
-		return "не смогли собрать запрос: " + err.Error(), err
+		return lang.T(event.Lang, "не смогли собрать запрос: ") + err.Error(), err
 	}
 
 	method := strings.ToUpper(strings.TrimSpace(target.Method))
@@ -208,7 +221,7 @@ func (s *Sender) attempt(target Target, event Event) (string, error) {
 	}
 	request, err := http.NewRequestWithContext(ctx, method, address, reader)
 	if err != nil {
-		return "плохой адрес: " + err.Error(), err
+		return lang.T(event.Lang, "плохой адрес: ") + err.Error(), err
 	}
 	if reader != nil {
 		request.Header.Set("Content-Type", contentType(target.Template))
@@ -219,16 +232,16 @@ func (s *Sender) attempt(target Target, event Event) (string, error) {
 
 	response, err := s.client.Do(request)
 	if err != nil {
-		return "не дозвонились: " + trimError(err), err
+		return lang.T(event.Lang, "не дозвонились: ") + trimError(err), err
 	}
 	defer response.Body.Close()
 	answer, _ := io.ReadAll(io.LimitReader(response.Body, 400))
 
 	if response.StatusCode >= 300 {
-		text := fmt.Sprintf("ответил %d: %s", response.StatusCode, strings.TrimSpace(string(answer)))
+		text := fmt.Sprintf(lang.T(event.Lang, "ответил %d: %s"), response.StatusCode, strings.TrimSpace(string(answer)))
 		return text, errors.New(text)
 	}
-	return fmt.Sprintf("доставлено, ответ %d", response.StatusCode), nil
+	return fmt.Sprintf(lang.T(event.Lang, "доставлено, ответ %d"), response.StatusCode), nil
 }
 
 // build подставляет значения в адрес и в тело.
@@ -244,7 +257,7 @@ func build(target Target, event Event) (string, []byte, error) {
 		return "", nil, err
 	}
 	if !strings.HasPrefix(address, "http://") && !strings.HasPrefix(address, "https://") {
-		return "", nil, errors.New("адрес должен начинаться с http:// или https://")
+		return "", nil, errors.New(lang.T(event.Lang, "Адрес должен начинаться с http:// или https://"))
 	}
 
 	template := strings.TrimSpace(target.Template)
@@ -280,18 +293,18 @@ func placeholders(event Event, quiet bool) map[string]string {
 func plainText(event Event, quiet bool) string {
 	var b strings.Builder
 	if event.Test {
-		b.WriteString("Проверка связи. ")
+		b.WriteString(lang.T(event.Lang, "Проверка связи. "))
 	}
-	fmt.Fprintf(&b, "Бот «%s» зовёт человека", event.BotName)
+	fmt.Fprintf(&b, lang.T(event.Lang, "Бот «%s» зовёт человека"), event.BotName)
 	if !quiet && event.Reason != "" {
 		fmt.Fprintf(&b, ": %s", event.Reason)
 	}
 	b.WriteString(".")
 	if event.Waiting > 0 {
-		fmt.Fprintf(&b, " Ждут: %d.", event.Waiting)
+		fmt.Fprintf(&b, lang.T(event.Lang, " Ждут: %d."), event.Waiting)
 	}
 	if event.AdminURL != "" {
-		fmt.Fprintf(&b, " Открыть: %s", event.AdminURL)
+		fmt.Fprintf(&b, lang.T(event.Lang, " Открыть: %s"), event.AdminURL)
 	}
 	return b.String()
 }

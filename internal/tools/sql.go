@@ -4,11 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/dripips/hark/internal/lang"
 	"github.com/dripips/hark/internal/store"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "modernc.org/sqlite"
@@ -29,13 +31,15 @@ import (
 // пользователем, у которого физически нет права на запись. Так и написано
 // в подсказке к полю в админке.
 type sqlRunner struct {
+	// lang — язык отказов. См. Build.
+	lang    string
 	tool    *store.Tool
 	allowed map[string]bool
 }
 
-func newSQLRunner(t *store.Tool) (Runner, error) {
+func newSQLRunner(t *store.Tool, code string) (Runner, error) {
 	if strings.TrimSpace(t.DSN) == "" {
-		return nil, fmt.Errorf("инструмент %q: не задано подключение", t.Name)
+		return nil, fmt.Errorf(lang.T(code, "подключение %q: не задана строка подключения"), t.Name)
 	}
 	allowed := map[string]bool{}
 	for _, name := range strings.FieldsFunc(t.AllowedTables, func(r rune) bool {
@@ -46,9 +50,9 @@ func newSQLRunner(t *store.Tool) (Runner, error) {
 		}
 	}
 	if len(allowed) == 0 {
-		return nil, fmt.Errorf("инструмент %q: пустой список таблиц, а без него нельзя", t.Name)
+		return nil, fmt.Errorf(lang.T(code, "подключение %q: пустой список таблиц, а без него нельзя"), t.Name)
 	}
-	return &sqlRunner{tool: t, allowed: allowed}, nil
+	return &sqlRunner{lang: code, tool: t, allowed: allowed}, nil
 }
 
 var (
@@ -71,16 +75,16 @@ var (
 func (s *sqlRunner) Guard(query string) error {
 	trimmed := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(query), ";"))
 	if trimmed == "" {
-		return fmt.Errorf("пустой запрос")
+		return errors.New(lang.T(s.lang, "пустой запрос"))
 	}
 	if reMultiple.MatchString(trimmed) {
-		return fmt.Errorf("несколько запросов сразу запрещены")
+		return errors.New(lang.T(s.lang, "несколько запросов сразу запрещены"))
 	}
 	if !reSelect.MatchString(trimmed) {
-		return fmt.Errorf("разрешён только SELECT")
+		return errors.New(lang.T(s.lang, "разрешён только SELECT"))
 	}
 	if match := reForbidden.FindString(trimmed); match != "" {
-		return fmt.Errorf("запрещённое слово %q: инструмент работает только на чтение", match)
+		return fmt.Errorf(lang.T(s.lang, "запрещённое слово %q: подключение работает только на чтение"), match)
 	}
 	// Сначала собираем имена временных запросов, иначе WITH recent AS (…)
 	// упрётся в белый список на собственном же имени.
@@ -94,7 +98,7 @@ func (s *sqlRunner) Guard(query string) error {
 			continue
 		}
 		if !s.allowed[table] {
-			return fmt.Errorf("таблица %q не в списке разрешённых", table)
+			return fmt.Errorf(lang.T(s.lang, "таблица %q не в списке разрешённых"), table)
 		}
 	}
 	return nil

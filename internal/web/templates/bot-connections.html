@@ -6,8 +6,8 @@
 </p>
 
 {{if .Checked}}
-<div class="notice notice--{{if eq .Checked "ок"}}ok{{else}}bad{{end}}">
-  <b>{{if eq .Checked "ок"}}{{t $.L `Подключение отвечает`}}{{else}}{{t $.L `Подключение не отвечает`}}{{end}}</b>
+<div class="notice notice--{{if .CheckOK}}ok{{else}}bad{{end}}">
+  <b>{{if .CheckOK}}{{t $.L `Подключение отвечает`}}{{else}}{{t $.L `Подключение не отвечает`}}{{end}}</b>
   <div class="io" style="margin-top:8px">{{.CheckText}}</div>
 </div>
 {{end}}

@@ -27,7 +27,7 @@ const minPasswordLen = 8
 func (s *Server) managers(w http.ResponseWriter, r *http.Request) {
 	list, err := s.DB.Managers(r.Context())
 	if err != nil {
-		http.Error(w, "не удалось прочитать список", http.StatusInternalServerError)
+		http.Error(w, lang.T(language(r), "не удалось прочитать список"), http.StatusInternalServerError)
 		return
 	}
 	me := currentManager(r)

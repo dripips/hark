@@ -15,7 +15,7 @@ func guard(t *testing.T, tables string) *sqlRunner {
 	t.Helper()
 	runner, err := newSQLRunner(&store.Tool{
 		Name: "shop", DSN: "file:test.db", Driver: "sqlite", AllowedTables: tables,
-	})
+	}, "ru")
 	if err != nil {
 		t.Fatalf("не создался: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestGuardChecksTableAllowlist(t *testing.T) {
 }
 
 func TestGuardRequiresAllowlist(t *testing.T) {
-	if _, err := newSQLRunner(&store.Tool{Name: "x", DSN: "file:t.db"}); err == nil {
+	if _, err := newSQLRunner(&store.Tool{Name: "x", DSN: "file:t.db"}, "ru"); err == nil {
 		t.Error("инструмент без списка таблиц создался, а это дыра")
 	}
 }
@@ -99,7 +99,7 @@ func TestRunLimitsRows(t *testing.T) {
 	runner, err := newSQLRunner(&store.Tool{
 		Name: "shop", DSN: path, Driver: "sqlite",
 		AllowedTables: "orders", RowLimit: 5, TimeoutMS: 3000,
-	})
+	}, "ru")
 	if err != nil {
 		t.Fatal(err)
 	}

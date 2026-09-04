@@ -123,7 +123,7 @@ func TestДоставкаИОтветСервера(t *testing.T) {
 	defer server.Close()
 
 	sender := New()
-	status := sender.Send(Target{
+	status, _ := sender.Send(Target{
 		URL:     server.URL,
 		Headers: `{"Authorization":"Bearer секрет"}`,
 	}, событие())
@@ -148,7 +148,7 @@ func TestОтказСервераВидноВИсходе(t *testing.T) {
 	}))
 	defer server.Close()
 
-	status := New().Send(Target{URL: server.URL}, событие())
+	status, _ := New().Send(Target{URL: server.URL}, событие())
 	if !strings.Contains(status, "404") {
 		t.Fatalf("исход не назвал код: %s", status)
 	}
@@ -168,7 +168,7 @@ func TestРедиректНеСледуется(t *testing.T) {
 	}))
 	defer server.Close()
 
-	status := New().Send(Target{URL: server.URL, Headers: `{"Authorization":"Bearer секрет"}`}, событие())
+	status, _ := New().Send(Target{URL: server.URL, Headers: `{"Authorization":"Bearer секрет"}`}, событие())
 	if reached {
 		t.Fatal("запрос ушёл на чужой хост вместе с заголовком")
 	}

@@ -61,7 +61,7 @@
     </p>
 
     {{if .Tested}}
-    <div class="notice {{if hasPrefix .Tested "доставлено"}}notice--ok{{else}}notice--bad{{end}}">
+    <div class="notice {{if .TestedOK}}notice--ok{{else}}notice--bad{{end}}">
       <b>{{t $.L `Проверка`}}</b><div class="io" style="margin-top:8px">{{.Tested}}</div>
     </div>
     {{end}}

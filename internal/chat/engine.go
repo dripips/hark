@@ -92,7 +92,7 @@ func (e *Engine) Answer(ctx context.Context, bot *store.Bot, conv *store.Convers
 		if !row.Enabled {
 			continue
 		}
-		runner, err := tools.Build(row)
+		runner, err := tools.Build(row, bot.LangOr())
 		if err != nil {
 			// Сломанный инструмент не должен ронять разговор, но и молчать о
 			// нём нельзя: он попадает в чек отдельным шагом.
