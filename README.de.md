@@ -85,6 +85,8 @@ Schrift, Abstände, Farben und Hintergrund stehen im Reiter „Aussehen“: eine
 
 ![Werkstatt für das Aussehen](screenshots/10-widget-studio.png)
 
+![Ein eingestelltes Widget auf einer echten Seite](screenshots/14-widget-live.png)
+
 Drei Farben werden gesetzt, der Rest folgt: gedämpfter Text, Haarlinien und die Blase des Bots werden aus Fläche und Textfarbe berechnet, die Beschriftung auf einer Füllung nach Kontrast. Wer das Häkchen „auto“ entfernt, übernimmt die Farbe selbst.
 
 Werte des Themas landen direkt im CSS des Widgets und werden deshalb an einer Stelle geprüft: eine Farbe muss ein sechsstelliger Code sein, eine Adresse `https`, Zahlen werden begrenzt, unbekannte Varianten fallen auf die Vorgabe zurück.

@@ -85,6 +85,8 @@ Font, spacing, colours and background live on the Appearance tab: a font list in
 
 ![Appearance studio](screenshots/10-widget-studio.png)
 
+![A themed widget on a real site](screenshots/14-widget-live.png)
+
 You set three colours and the rest follow: muted text, hairlines and the bot bubble are derived from the surface and the text colour, and the label on a filled button is picked by contrast. Clearing the "auto" box takes a colour back under manual control.
 
 Theme values land directly in the widget's CSS, so they are cleaned in one place: a colour must be a six-digit code, a URL must be `https`, numbers are clamped, and unknown options fall back to the default.
