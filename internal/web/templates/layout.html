@@ -15,12 +15,12 @@
     <a class="brand" href="/">hark<span>.</span></a>
     <nav class="nav">
       <a href="/" {{if eq .Path "/"}}aria-current="page"{{end}}>Обзор</a>
-      <a href="/inbox" {{if eq .Path "/inbox"}}aria-current="page"{{end}}>Разговоры</a>
-      {{/* Счётчик — отдельная ссылка рядом, а не внутри: вложенная ссылка
-           недопустима, и браузер разобрал бы её по-своему. Ведёт сразу в
-           отфильтрованный список ждущих. */}}
-      <a class="queue" href="/inbox?state=waiting" data-queue="{{.Waiting}}"
-         title="Ждут человека" {{if not .Waiting}}hidden{{end}}>{{.Waiting}}</a>
+      {{/* Счётчик внутри самой ссылки, а не отдельной рядом: снаружи он лез
+           отрицательным отступом на подсветку текущей страницы. Ссылка в
+           ссылку недопустима, а span в ссылке — обычное дело. */}}
+      <a href="/inbox" {{if eq .Path "/inbox"}}aria-current="page"{{end}}>Разговоры{{" "}}
+        <span class="queue" data-queue="{{.Waiting}}" title="Ждут человека"
+              {{if not .Waiting}}hidden{{end}}>{{.Waiting}}</span></a>
       <a href="/bots" {{if eq .Path "/bots"}}aria-current="page"{{end}}>Боты</a>
       <a href="/connections" {{if eq .Path "/connections"}}aria-current="page"{{end}}>Подключения</a>
       <a href="/analytics" {{if eq .Path "/analytics"}}aria-current="page"{{end}}>Аналитика</a>

@@ -511,25 +511,26 @@ tr:last-child td { border-bottom: 0; }
   .person__form > .btn { width: 100%; }
 }
 
-/* Счётчик ожидающих в шапке. Появляется, только когда кто-то ждёт: пустой
-   ноль в навигации — это шум, на который перестают смотреть. */
+/* Счётчик ожидающих живёт внутри ссылки «Разговоры»: так он попадает под её
+   подсветку и не спорит с отступами соседей. Появляется, только когда кто-то
+   ждёт — пустой ноль в навигации это шум, на который перестают смотреть. */
 .queue {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  margin-left: -12px;
-  padding: 0 7px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  margin-left: 2px;
   border-radius: 999px;
   background: var(--warm);
   color: #fff;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   line-height: 1;
+  vertical-align: 1px;
   animation: queue-in 0.35s var(--spring);
 }
-.queue:hover { text-decoration: none; filter: brightness(1.08); }
 
 @keyframes queue-in {
   from { transform: scale(0.4); opacity: 0; }
