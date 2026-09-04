@@ -97,6 +97,18 @@ Repo: https://github.com/dripips/hark
 2. Hark: self-hosted AI support bot, single Go binary, bring your own model (Ollama, OpenAI, Anthropic)
 3. Self-hosted support bot where 86% of what you pay for is text the visitor never reads
 
+## Video
+
+`video/out/hark-en.mp4` — 45 seconds, 1920×1080. A vertical cut is in
+`hark-en-vertical.mp4`.
+
+It reads with the sound off, which is what matters: Reddit autoplays muted.
+Music is optional and not included, see `video/README.md`.
+
+Reddit takes video uploads directly, but a text post with the repo link
+usually does better in that sub than a video post. Put the video in a comment
+if the thread picks up.
+
 ## Notes before posting
 
 - Flair: **Release**. Check the sidebar, I could not read the rules from here.
