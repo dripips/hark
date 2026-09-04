@@ -1,0 +1,26 @@
+# Запуск одной командой: docker compose up -d
+#
+# Первого менеджера заводит отдельная команда, потому что пароль не должен
+# попадать ни в этот файл, ни в историю оболочки:
+#
+#   docker compose run --rm hark -manager you@example.com -password секрет
+#
+# Ключи моделей живут в базе у каждого бота, а не здесь: у разных ботов могут
+# быть разные поставщики, и одна переменная окружения этого не покрывает.
+
+services:
+  hark:
+    build: .
+    # Или готовый образ, когда он появится:
+    # image: ghcr.io/dripips/hark:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - hark-data:/data
+    environment:
+      HARK_ADDR: ":8080"
+      HARK_DB: "/data/hark.db"
+
+volumes:
+  hark-data:

@@ -1,0 +1,111 @@
+# Hark: a self-hosted support chatbot that shows you the bill for every answer
+
+*Draft for r/selfhosted. Flair: Release. Title options at the bottom.*
+
+---
+
+I wanted a support bot on a site without handing the conversations to
+somebody else's cloud, so I wrote one. It is a single Go binary with a
+SQLite file next to it.
+
+The part I did not expect to find is where the money goes.
+
+Every answer in Hark gets a receipt: which model was called, which tools it
+used, how long each step took, and what it cost. Once those receipts existed
+I could see something the provider dashboard does not break out. Across the
+answers in my demo database, between 72% and 86% of the output tokens I paid
+for were reasoning tokens. The visitor never sees a word of them. One answer
+billed 518 output tokens and 448 of them were thinking.
+
+That number is not a scandal, it is just how reasoning models work. But if
+you are budgeting a support bot by counting the characters in its replies,
+you are off by roughly a factor of five, and nothing in the usual billing
+view tells you so. I now show it in the receipt as its own column.
+
+## The second surprise: providers do not agree on their own knobs
+
+I wanted Hark to work with whatever model you point it at. OpenAI, Anthropic,
+and anything that speaks the OpenAI format, which covers Ollama, vLLM,
+LM Studio and OpenRouter. That sounds like one API. It is not.
+
+`gpt-5-nano` refuses `temperature` outright: only the default value is
+supported. It also refuses the old `max_tokens` field and wants
+`max_completion_tokens` instead. None of this is in a table anywhere, and a
+settings page with a temperature slider breaks every request against that
+model.
+
+So Hark asks. One button fires a few tiny requests and records what came
+back, and afterwards the settings page only shows the knobs that model
+accepted. It costs a few hundred tokens, once.
+
+## What it does
+
+A bot you configure with instructions, and then attach real data to. Two
+kinds of connection: call your own HTTP API, or read your own database. For
+the database the model writes the SQL and Hark decides whether to run it,
+with a table allowlist, SELECT only, no second statement after a semicolon,
+a row cap applied by wrapping the query rather than appending LIMIT, since
+UNION walks straight past an appended LIMIT.
+
+When the bot cannot answer it hands over to a person and says so. The open
+admin tab finds out over a stream, and if nobody has the admin open, Hark
+calls one URL you configured. There is no Telegram integration inside it and
+there never will be. Telegram is what you get by pasting
+`api.telegram.org/bot<token>/sendMessage` into that field.
+
+The widget is one script tag on your page, 23 KB, seven over the wire.
+Fonts, spacing, colours and background are configurable, and the preview in
+the admin runs the actual widget rather than a mockup.
+
+## Running it
+
+```
+go build -o hark .
+./hark -manager you@example.com -password secret
+./hark
+```
+
+Then `localhost:8080`. Templates, admin and widget are inside the binary,
+the database is a file. Four direct dependencies. `./hark -demo` fills it
+with a shop, two connections and four conversations with recorded receipts,
+so you can look at it without an API key and without spending anything.
+
+Or with Docker:
+
+```
+docker compose up -d
+docker compose run --rm hark -manager you@example.com -password secret
+```
+
+42 MB image, runs as uid 65532, database in a named volume. SQLite here is
+pure Go, so there is no cgo and the binary is static: it cross-compiles to
+arm64 for a Pi without any of the usual pain.
+
+## What it is not
+
+No multi-tenancy, no billing, no roles. Every manager sees every
+conversation. It expects one owner and a handful of people answering, and it
+will not grow into a helpdesk suite, because that is not what I needed.
+
+Repo: https://github.com/dripips/hark
+
+---
+
+## Title options
+
+1. I built a self-hosted support chatbot that shows the bill for every answer, including the reasoning tokens you never see
+2. Hark: self-hosted AI support bot, single Go binary, bring your own model (Ollama, OpenAI, Anthropic)
+3. Self-hosted support bot where 86% of what you pay for is text the visitor never reads
+
+## Notes before posting
+
+- Flair: **Release**. Check the sidebar, I could not read the rules from here.
+- Do not cross-post this text elsewhere the same day. For r/LocalLLaMA write a
+  different post that leads with the bring-your-own-model and capability-probe
+  angle, and for r/golang one that leads with the SQL guards and the
+  provider abstraction.
+- Be around for the first few hours. That sub asks real questions and a
+  thread with no author in it dies.
+- Expect: "how is this different from Chatwoot / Rasa / Typebot", "does it
+  phone home", "arm64?". Answers: Hark is one binary with receipts rather
+  than a support suite; no; yes, it cross-compiles clean.

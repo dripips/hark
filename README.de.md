@@ -157,6 +157,16 @@ Zum Umsehen:
 
 Die Demo läuft ohne API-Schlüssel und kostet nichts: Die Belege sind aufgezeichnet, nicht erzeugt.
 
+Oder im Container:
+
+```bash
+docker compose up -d
+docker compose run --rm hark -manager you@example.com -password geheim
+```
+
+Das Abbild wiegt 42 MB, der Prozess läuft nicht als root, die Datenbank liegt in einem benannten Volume. SQLite ist hier reines Go, cgo entfällt, die Binärdatei ist statisch und lässt sich ohne die übliche Mühe für arm64 auf einem Raspberry Pi bauen.
+
+
 ## Einstellungen
 
 | Schalter | Variable | Vorgabe |

@@ -1,0 +1,25 @@
+# В образ не должно уехать ничего, кроме исходников.
+.git
+.gitignore
+.gitattributes
+
+# Базы и всё, что рядом с ними: там переписка с посетителями и ключи моделей.
+*.db
+*.db-shm
+*.db-wal
+*.env
+
+# Собранное на хозяине: под Linux всё равно пересобирается.
+hark
+hark.exe
+hark.exe~
+
+# Картинки и черновики к образу отношения не имеют, но раздувают контекст.
+screenshots/
+post/
+migrations/
+testdata/
+README*.md
+LICENSE
+Dockerfile
+docker-compose.yml

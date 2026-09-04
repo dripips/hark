@@ -157,6 +157,16 @@ To look around first:
 
 The demo seeds without an API key and spends nothing: the receipts are recorded, not generated.
 
+Or in a container:
+
+```bash
+docker compose up -d
+docker compose run --rm hark -manager you@example.com -password secret
+```
+
+A 42 MB image, running as a non-root user, with the database in a named volume. SQLite here is pure Go, so there is no cgo, the binary is static, and it cross-compiles to arm64 for a Raspberry Pi without any of the usual pain.
+
+
 ## Configuration
 
 | Flag | Env | Default |
