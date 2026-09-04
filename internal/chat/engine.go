@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -54,7 +55,18 @@ func (e *Engine) Answer(ctx context.Context, bot *store.Bot, conv *store.Convers
 		return nil, err
 	}
 
-	toolRows, err := e.DB.Tools(ctx, bot.ID)
+	// База живёт по своему контексту, оторванному от запроса.
+	//
+	// Посетитель может закрыть вкладку в любую секунду разговора, и контекст
+	// запроса при этом отменяется. Обращение к модели и к подключениям это
+	// действительно должно прерывать — платить за ответ, который никто не
+	// прочтёт, незачем. А вот запись прерывать нельзя: иначе реплика «Передаю
+	// разговор менеджеру» остаётся у посетителя, но разговор не попадает в
+	// очередь, и человека, которого пообещали, никто не зовёт.
+	dbCtx, closeDB := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+	defer closeDB()
+
+	toolRows, err := e.DB.Tools(dbCtx, bot.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +102,7 @@ func (e *Engine) Answer(ctx context.Context, bot *store.Bot, conv *store.Convers
 		})
 	}
 
-	history, err := e.buildHistory(ctx, bot, conv)
+	history, err := e.buildHistory(dbCtx, bot, conv)
 	if err != nil {
 		return nil, err
 	}
@@ -228,18 +240,24 @@ func (e *Engine) Answer(ctx context.Context, bot *store.Bot, conv *store.Convers
 	receipt.CostMicro = Cost(bot, usage)
 	receipt.TookMS = time.Since(started).Milliseconds()
 
+	// Три записи, которые должны случиться все: реплика, чек к ней и, если бот
+	// сдался, перевод разговора в очередь к человеку.
 	message := &store.Message{ConversationID: conv.ID, Role: "assistant", Text: answer}
-	if err := e.DB.AddMessage(ctx, message); err != nil {
+	if err := e.DB.AddMessage(dbCtx, message); err != nil {
 		return nil, err
 	}
 	receipt.MessageID = message.ID
-	if err := e.DB.SaveReceipt(ctx, receipt); err != nil {
-		return nil, err
+	if err := e.DB.SaveReceipt(dbCtx, receipt); err != nil {
+		// Чек — не причина терять эскалацию: посетитель уже получил ответ.
+		log.Printf("чек разговора %d не записан: %v", conv.ID, err)
 	}
 
 	if escalated {
-		if err := e.DB.SetConversationState(ctx, conv.ID, "waiting", reason); err != nil {
-			return nil, err
+		if err := e.DB.SetConversationState(dbCtx, conv.ID, "waiting", reason); err != nil {
+			// Идти дальше некуда. Громкая строка в журнале — единственное, чем
+			// мы можем предупредить владельца, что этот разговор ждёт человека,
+			// которого не позвали.
+			log.Printf("ВНИМАНИЕ: разговор %d не поставлен в очередь к человеку: %v", conv.ID, err)
 		}
 	}
 

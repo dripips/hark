@@ -80,6 +80,11 @@ type Bot struct {
 
 	// Theme — вся внешность одним JSON. Разбор в Design().
 	Theme string
+
+	// Notify — куда звонить, когда бот сдался. Тоже одним JSON: см. Theme.
+	Notify           string
+	NotifyLastAt     sql.NullString
+	NotifyLastStatus string
 }
 
 // Quick разбирает готовые вопросы: по одному в строке, пустые пропускаются.
@@ -188,7 +193,8 @@ const botColumns = `id, slug, name, instructions, greeting, provider, base_url, 
 	api_key, max_tokens, temperature, reasoning, capabilities, price_in, price_out,
 	accent, position, launcher_text, allowed_origins, escalate_after, enabled,
 	welcome_title, welcome_text, quick_replies, disclaimer, privacy_url, privacy_label,
-	launcher_style, avatar_emoji, corner_radius, theme`
+	launcher_style, avatar_emoji, corner_radius, theme,
+	notify, notify_last_at, notify_last_status`
 
 func scanBot(row interface{ Scan(...any) error }) (*Bot, error) {
 	var b Bot
@@ -197,7 +203,8 @@ func scanBot(row interface{ Scan(...any) error }) (*Bot, error) {
 		&b.Capabilities, &b.PriceIn, &b.PriceOut, &b.Accent, &b.Position, &b.LauncherText,
 		&b.AllowedOrigins, &b.EscalateAfter, &b.Enabled,
 		&b.WelcomeTitle, &b.WelcomeText, &b.QuickReplies, &b.Disclaimer,
-		&b.PrivacyURL, &b.PrivacyLabel, &b.LauncherStyle, &b.AvatarEmoji, &b.CornerRadius, &b.Theme)
+		&b.PrivacyURL, &b.PrivacyLabel, &b.LauncherStyle, &b.AvatarEmoji, &b.CornerRadius, &b.Theme,
+		&b.Notify, &b.NotifyLastAt, &b.NotifyLastStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -238,15 +245,15 @@ func (db *DB) SaveBot(ctx context.Context, b *Bot) error {
 				api_key, max_tokens, temperature, reasoning, capabilities, price_in, price_out,
 				accent, position, launcher_text, allowed_origins, escalate_after, enabled,
 				welcome_title, welcome_text, quick_replies, disclaimer, privacy_url,
-				privacy_label, launcher_style, avatar_emoji, corner_radius, theme)
-			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+				privacy_label, launcher_style, avatar_emoji, corner_radius, theme, notify)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			b.Slug, b.Name, b.Instructions, b.Greeting, b.Provider, b.BaseURL, b.Model,
 			b.APIKey, b.MaxTokens, b.Temperature, b.Reasoning, b.Capabilities,
 			b.PriceIn, b.PriceOut, b.Accent, b.Position, b.LauncherText,
 			b.AllowedOrigins, b.EscalateAfter, b.Enabled,
 			b.WelcomeTitle, b.WelcomeText, b.QuickReplies, b.Disclaimer,
 			b.PrivacyURL, b.PrivacyLabel, b.LauncherStyle, b.AvatarEmoji, b.CornerRadius,
-			b.Theme)
+			b.Theme, b.Notify)
 		if err != nil {
 			return err
 		}
@@ -259,7 +266,7 @@ func (db *DB) SaveBot(ctx context.Context, b *Bot) error {
 			price_in=?, price_out=?, accent=?, position=?, launcher_text=?, allowed_origins=?,
 			escalate_after=?, enabled=?, welcome_title=?, welcome_text=?, quick_replies=?,
 			disclaimer=?, privacy_url=?, privacy_label=?, launcher_style=?, avatar_emoji=?,
-			corner_radius=?, theme=?, updated_at=datetime('now')
+			corner_radius=?, theme=?, notify=?, updated_at=datetime('now')
 		WHERE id=?`,
 		b.Slug, b.Name, b.Instructions, b.Greeting, b.Provider, b.BaseURL, b.Model,
 		b.APIKey, b.MaxTokens, b.Temperature, b.Reasoning, b.Capabilities,
@@ -267,7 +274,7 @@ func (db *DB) SaveBot(ctx context.Context, b *Bot) error {
 		b.EscalateAfter, b.Enabled,
 		b.WelcomeTitle, b.WelcomeText, b.QuickReplies, b.Disclaimer,
 		b.PrivacyURL, b.PrivacyLabel, b.LauncherStyle, b.AvatarEmoji, b.CornerRadius,
-		b.Theme, b.ID)
+		b.Theme, b.Notify, b.ID)
 	return err
 }
 
@@ -394,6 +401,37 @@ func (db *DB) Conversations(ctx context.Context, botID int64, state string, limi
 		out = append(out, c)
 	}
 	return out, rows.Err()
+}
+
+// NoteNotify записывает исход последнего зова.
+//
+// Отдельным узким запросом, а не через SaveBot: зов уходит из фоновой
+// горутины и приземляется тогда, когда владелец, может быть, как раз правит
+// настройки. Общее сохранение затёрло бы одно другим.
+func (db *DB) NoteNotify(ctx context.Context, botID int64, status string) error {
+	_, err := db.ExecContext(ctx, `
+		UPDATE bots SET notify_last_at = datetime('now'), notify_last_status = ?
+		WHERE id = ?`, status, botID)
+	return err
+}
+
+// WaitingCount — сколько разговоров ждут человека у одного бота.
+func (db *DB) WaitingCount(ctx context.Context, botID int64) (int, error) {
+	var count int
+	err := db.QueryRowContext(ctx,
+		`SELECT count(*) FROM conversations WHERE bot_id = ? AND state = 'waiting'`,
+		botID).Scan(&count)
+	return count, err
+}
+
+// CountWaiting — сколько разговоров ждут человека. Индекс по (state,
+// updated_at) уже есть, поэтому счётчик дёшев и его можно считать на каждый
+// показ страницы, а не хранить где-то рядом и рассинхронизировать.
+func (db *DB) CountWaiting(ctx context.Context) (int, error) {
+	var count int
+	err := db.QueryRowContext(ctx,
+		`SELECT count(*) FROM conversations WHERE state = 'waiting'`).Scan(&count)
+	return count, err
 }
 
 func (db *DB) SetConversationState(ctx context.Context, id int64, state, reason string) error {

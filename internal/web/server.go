@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/dripips/hark/internal/chat"
+	"github.com/dripips/hark/internal/notify"
 	"github.com/dripips/hark/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -30,13 +31,29 @@ const sessionCookie = "hark_session"
 type Server struct {
 	DB     *store.DB
 	Engine *chat.Engine
+	// Hub рассылает открытым вкладкам админки очередь ожидающих. Живёт в
+	// памяти процесса и умирает вместе с ним: очередь всё равно лежит в базе,
+	// а хаб — лишь способ узнать о ней быстрее, чем перезагрузкой страницы.
+	Hub *hub
+	// Notify зовёт человека наружу, когда админку никто не держит открытой.
+	// Пустой адрес у бота означает выключено, поэтому отправитель заводится
+	// всегда и ничего не делает, пока его не настроили.
+	Notify *notify.Sender
 
 	templates *template.Template
 	router    chi.Router
 }
 
 func New(db *store.DB) (*Server, error) {
-	s := &Server{DB: db, Engine: &chat.Engine{DB: db}}
+	s := &Server{DB: db, Engine: &chat.Engine{DB: db}, Hub: newHub(), Notify: notify.New()}
+	// Исход зова записывает та же горутина, что его сделала: своим контекстом,
+	// не привязанным к запросу, которого к тому моменту уже нет.
+	s.Notify.Note = func(botID int64, status string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = s.DB.NoteNotify(ctx, botID, status)
+	}
+	s.Notify.Start()
 	if err := s.parseTemplates(); err != nil {
 		return nil, err
 	}
@@ -88,6 +105,7 @@ func (s *Server) routes() {
 		r.Post("/bots/{id}/connections/{toolID}/delete", s.connectionDelete)
 		r.Get("/bots/{id}/answers", s.botAnswers)
 		r.Post("/bots/{id}/answers", s.botAnswersSave)
+		r.Post("/bots/{id}/answers/test", s.notifyTest)
 		r.Get("/bots/{id}/model", s.botModel)
 		r.Post("/bots/{id}/model", s.botModelSave)
 		r.Get("/bots/{id}/widget", s.botWidget)
@@ -100,6 +118,13 @@ func (s *Server) routes() {
 		r.Post("/conversations/{id}/reply", s.conversationReply)
 		r.Post("/conversations/{id}/state", s.conversationState)
 		r.Get("/analytics", s.analytics)
+		r.Get("/events", s.events)
+		r.Get("/queue.json", s.queueJSON)
+		r.Get("/managers", s.managers)
+		r.Post("/managers", s.managerCreate)
+		r.Post("/managers/{id}/rename", s.managerRename)
+		r.Post("/managers/{id}/password", s.managerPassword)
+		r.Post("/managers/{id}/delete", s.managerDelete)
 	})
 
 	s.router = r
@@ -109,8 +134,16 @@ func (s *Server) routes() {
 
 type ctxKey string
 
-const managerKey ctxKey = "manager"
+const (
+	managerKey ctxKey = "manager"
+	tokenKey   ctxKey = "token"
+)
 
+// requireManager кладёт в контекст самого человека, а не только его имя.
+//
+// Имени хватало, пока админка умела только подписывать ответы. Страница
+// управления менеджерами должна знать, кто именно смотрит: себя удалять
+// нельзя, чужой пароль менять нельзя, свой — можно.
 func (s *Server) requireManager(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(sessionCookie)
@@ -119,24 +152,43 @@ func (s *Server) requireManager(next http.Handler) http.Handler {
 			return
 		}
 		var id int64
-		var name string
 		err = s.DB.QueryRowContext(r.Context(), `
-			SELECT m.id, m.name FROM sessions s
-			JOIN managers m ON m.id = s.manager_id
-			WHERE s.token = ? AND s.expires_at > datetime('now')`,
-			cookie.Value).Scan(&id, &name)
+			SELECT manager_id FROM sessions
+			WHERE token = ? AND expires_at > datetime('now')`,
+			cookie.Value).Scan(&id)
 		if err != nil {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
-		ctx := context.WithValue(r.Context(), managerKey, name)
+		manager, err := s.DB.ManagerByID(r.Context(), id)
+		if err != nil {
+			// Человека удалили, а печенье осталось. Сессия каскадом уже
+			// снесена, но запрос мог прийти раньше — выпроваживаем.
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), managerKey, manager)
+		ctx = context.WithValue(ctx, tokenKey, cookie.Value)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
+func currentManager(r *http.Request) *store.Manager {
+	manager, _ := r.Context().Value(managerKey).(*store.Manager)
+	return manager
+}
+
+func currentToken(r *http.Request) string {
+	token, _ := r.Context().Value(tokenKey).(string)
+	return token
+}
+
 func managerName(r *http.Request) string {
-	name, _ := r.Context().Value(managerKey).(string)
-	return name
+	if manager := currentManager(r); manager != nil {
+		return manager.Name
+	}
+	return ""
 }
 
 func (s *Server) loginForm(w http.ResponseWriter, r *http.Request) {
@@ -147,10 +199,11 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	email := strings.TrimSpace(r.FormValue("email"))
 	password := r.FormValue("password")
 
-	var id int64
+	manager, err := s.DB.ManagerByEmail(r.Context(), email)
 	var hash string
-	err := s.DB.QueryRowContext(r.Context(),
-		`SELECT id, password_hash FROM managers WHERE email = ?`, email).Scan(&id, &hash)
+	if err == nil {
+		hash, err = s.DB.PasswordHash(r.Context(), manager.ID)
+	}
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) != nil {
 		// Одна и та же формулировка на неверную почту и неверный пароль:
 		// иначе форма подсказывает, какие адреса заведены.
@@ -163,10 +216,11 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	token := randomToken()
 	if _, err := s.DB.ExecContext(r.Context(),
 		`INSERT INTO sessions (token, manager_id, expires_at)
-		 VALUES (?, ?, datetime('now', '+30 days'))`, token, id); err != nil {
+		 VALUES (?, ?, datetime('now', '+30 days'))`, token, manager.ID); err != nil {
 		http.Error(w, "не удалось создать сессию", http.StatusInternalServerError)
 		return
 	}
+	_ = s.DB.TouchManager(r.Context(), manager.ID)
 	http.SetCookie(w, &http.Cookie{
 		Name: sessionCookie, Value: token, Path: "/", HttpOnly: true,
 		SameSite: http.SameSiteLaxMode, Expires: time.Now().Add(30 * 24 * time.Hour),
@@ -186,6 +240,12 @@ func randomToken() string {
 	buf := make([]byte, 24)
 	_, _ = rand.Read(buf)
 	return hex.EncodeToString(buf)
+}
+
+// comparePassword сверяет пароль с хешем. Обёртка нужна, чтобы bcrypt не
+// расползался по обработчикам.
+func comparePassword(hash, password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }
 
 // HashPassword нужен установщику и тестам.

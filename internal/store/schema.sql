@@ -135,6 +135,7 @@ CREATE TABLE IF NOT EXISTS managers (
   email         TEXT    NOT NULL UNIQUE,
   name          TEXT    NOT NULL DEFAULT '',
   password_hash TEXT    NOT NULL,
+  last_seen     TEXT,
   created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 

@@ -1,0 +1,106 @@
+{{template "head" .}}
+
+<h1>Менеджеры</h1>
+<p class="lede" style="max-width:64ch">
+  Кто входит в админку и отвечает посетителям, когда бот сдаётся. Ролей нет:
+  каждый видит все разговоры и может убрать любого другого.
+</p>
+
+{{if .Done}}<div class="notice notice--ok">{{.Done}}</div>{{end}}
+{{if .Error}}<div class="notice notice--bad">{{.Error}}</div>{{end}}
+
+{{if .Alone}}
+<div class="notice">
+  <b>Вы здесь один</b>
+  <div style="margin-top:6px;color:var(--t2)">
+    Пока менеджер один, убрать его нельзя: без него в админку не войдёт никто.
+    Заведите второго, если хотите подстраховаться на случай забытого пароля.
+  </div>
+</div>
+{{end}}
+
+{{range .Managers}}
+<div class="card person">
+  <div class="person__row">
+    <div class="person__who">
+      <b>{{.Name}}</b>
+      {{if and $.Me (eq .ID $.Me.ID)}}<span class="pill pill--human">это вы</span>{{end}}
+      <div class="mono person__mail">{{.Email}}</div>
+    </div>
+    <div class="person__seen">
+      {{if .LastSeen.Valid}}заходил {{when .LastSeen.String}}{{else}}ни разу не заходил{{end}}
+    </div>
+  </div>
+
+  <details class="tune">
+    <summary>Изменить</summary>
+
+    <form method="post" action="/managers/{{.ID}}/rename" class="person__form">
+      <div class="field" style="margin:0;flex:1">
+        <label for="name{{.ID}}">Имя</label>
+        <input id="name{{.ID}}" type="text" name="name" value="{{.Name}}" required>
+        <div class="field__hint">Им подписаны ответы, которые видит посетитель.</div>
+      </div>
+      <button class="btn btn--ghost" type="submit">Переименовать</button>
+    </form>
+
+    <form method="post" action="/managers/{{.ID}}/password" class="person__form">
+      {{if and $.Me (eq .ID $.Me.ID)}}
+      <div class="field" style="margin:0;flex:1">
+        <label for="current{{.ID}}">Нынешний пароль</label>
+        <input id="current{{.ID}}" type="password" name="current" autocomplete="current-password" required>
+      </div>
+      {{end}}
+      <div class="field" style="margin:0;flex:1">
+        <label for="pass{{.ID}}">Новый пароль</label>
+        <input id="pass{{.ID}}" type="password" name="password" minlength="8"
+               autocomplete="new-password" required>
+        <div class="field__hint">
+          {{if and $.Me (eq .ID $.Me.ID)}}
+            Прочие ваши входы будут погашены, эта вкладка останется.
+          {{else}}
+            Все его входы будут погашены, и он войдёт заново с этим паролем.
+          {{end}}
+        </div>
+      </div>
+      <button class="btn btn--ghost" type="submit">Сменить пароль</button>
+    </form>
+
+    {{if and $.Me (ne .ID $.Me.ID)}}
+    <form method="post" action="/managers/{{.ID}}/delete" class="person__form">
+      <div style="flex:1;color:var(--t2);font-size:13.5px">
+        Убрать из админки. Его ответы в прошлых разговорах останутся на месте.
+      </div>
+      <button class="btn btn--danger" type="submit">Убрать</button>
+    </form>
+    {{end}}
+  </details>
+</div>
+{{end}}
+
+<div class="card">
+  <h2 style="margin-top:0">Завести менеджера</h2>
+  <form method="post" action="/managers">
+    <div class="row">
+      <div class="field">
+        <label for="email">Почта</label>
+        <input id="email" type="email" name="email" placeholder="ivan@example.com" required>
+        <div class="field__hint">По ней он входит. Письма Hark не шлёт.</div>
+      </div>
+      <div class="field">
+        <label for="new-name">Имя</label>
+        <input id="new-name" type="text" name="name" placeholder="Иван">
+        <div class="field__hint">Пусто — возьмём почту.</div>
+      </div>
+      <div class="field">
+        <label for="new-pass">Пароль</label>
+        <input id="new-pass" type="password" name="password" minlength="8"
+               autocomplete="new-password" required>
+        <div class="field__hint">От восьми знаков. Передайте его человеку сами.</div>
+      </div>
+    </div>
+    <button class="btn" type="submit">Завести</button>
+  </form>
+</div>
+
+{{template "foot" .}}

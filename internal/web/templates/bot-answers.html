@@ -38,7 +38,84 @@
     </div>
   </div>
 
-  <div class="formbar"><button class="btn" type="submit">Сохранить</button></div>
+  <div class="card">
+    <h2 style="margin-top:0">Куда сообщить, когда бот сдался</h2>
+    <p class="field__hint" style="margin:0 0 16px;max-width:64ch">
+      Открытая вкладка админки узнаёт об этом сама и сразу. Это на случай, когда её
+      никто не держит открытой: Hark дёрнет один адрес, а Телеграм, почту или что
+      угодно ещё вы подставите сами. Пусто — не звонить.
+    </p>
+
+    {{if .Tested}}
+    <div class="notice {{if hasPrefix .Tested "доставлено"}}notice--ok{{else}}notice--bad{{end}}">
+      <b>Проверка</b><div class="io" style="margin-top:8px">{{.Tested}}</div>
+    </div>
+    {{end}}
+
+    <div class="row">
+      <div class="field" style="max-width:140px">
+        <label for="notify_method">Способ</label>
+        <select id="notify_method" name="notify_method">
+          <option value="POST" {{if eq .Notify.Method "POST"}}selected{{end}}>POST</option>
+          <option value="GET" {{if eq .Notify.Method "GET"}}selected{{end}}>GET</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="notify_url">Адрес</label>
+        <input id="notify_url" type="text" name="notify_url" value="{{.Notify.URL}}"
+               placeholder="https://api.telegram.org/bot.../sendMessage?chat_id=1&amp;text={text}">
+        <div class="field__hint">
+          Только http и https. В адрес и в тело подставляются
+          <span class="mono">{bot} {reason} {id} {url} {page} {waiting} {text}</span>.
+          Готовая строка по-русски — это <span class="mono">{text}</span>: с ней шаблон не нужен вовсе.
+        </div>
+      </div>
+    </div>
+
+    <details class="tune">
+      <summary>Заголовки и своё тело</summary>
+      <div class="field" style="margin-top:14px">
+        <label for="notify_headers">Заголовки, JSON</label>
+        <input id="notify_headers" type="text" name="notify_headers" value="{{.Notify.Headers}}"
+               placeholder='{"Authorization":"Bearer ..."}'>
+        <div class="field__hint">Переходы по редиректу запрещены: иначе ключ уедет на чужой хост.</div>
+      </div>
+      <div class="field">
+        <label for="notify_template">Тело запроса</label>
+        <textarea id="notify_template" name="notify_template" style="min-height:90px"
+                  placeholder='{"text":"{text}"}'>{{.Notify.Template}}</textarea>
+        <div class="field__hint">
+          Пусто — уйдёт стандартный JSON с ботом, причиной, ссылкой и длиной очереди.
+          Переписки в нём нет никогда.
+        </div>
+      </div>
+    </details>
+
+    <div class="field">
+      <label style="display:flex;gap:8px;align-items:center">
+        <input type="checkbox" name="notify_quiet" style="width:auto" {{if .Notify.Quiet}}checked{{end}}>
+        Без причины
+      </label>
+      <div class="field__hint">
+        Причину пишет модель, и она может пересказать слова посетителя. С этой галочкой
+        наружу уходят только счётчик и ссылка.
+      </div>
+    </div>
+
+    {{if .Bot.NotifyLastStatus}}
+    <div class="field" style="margin-bottom:0">
+      <label>Последний зов</label>
+      <div class="io">{{if .Bot.NotifyLastAt.Valid}}{{when .Bot.NotifyLastAt.String}} · {{end}}{{.Bot.NotifyLastStatus}}</div>
+    </div>
+    {{end}}
+  </div>
+
+  <div class="formbar">
+    <button class="btn" type="submit">Сохранить</button>
+    <button class="btn btn--ghost" type="submit" formaction="/bots/{{.Bot.ID}}/answers/test">
+      Сохранить и позвонить сейчас
+    </button>
+  </div>
 </form>
 
 {{template "foot" .}}

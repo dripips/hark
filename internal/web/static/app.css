@@ -110,7 +110,14 @@ h2 { font-size: 19px; letter-spacing: -0.02em; margin: 0 0 14px; }
   border-radius: 20px;
   box-shadow: var(--shadow);
   padding: 22px;
+  /* Отступ на самой карточке, а не инлайном у каждой. Пока страница бота была
+     одной длинной формой, разнос был прописан по месту; со вкладками формы
+     стали короткими, инлайновые стили ушли, и карточки слиплись. */
+  margin-bottom: 22px;
 }
+
+/* В сетке расстояние держит gap: двойной отступ рвал бы ряды по вертикали. */
+.grid > .card { margin-bottom: 0; }
 
 .grid { display: grid; gap: 16px; }
 .grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -371,6 +378,7 @@ tr:last-child td { border-bottom: 0; }
 .picker__card b { display: block; margin-bottom: 6px; }
 .picker__card span { color: var(--t2); font-size: 13.5px; }
 
+/* Список читается плотнее отдельных разделов, поэтому 14, а не 22. */
 .conn { margin-bottom: 14px; }
 .conn__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .conn__name { font-size: 15px; color: var(--accent); }
@@ -463,3 +471,70 @@ tr:last-child td { border-bottom: 0; }
 .swatch__auto { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--t3); }
 .swatch__auto input { width: auto; margin: 0; }
 .swatch input[type="color"]:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Менеджеры ───────────────────────────────────────────────────────── */
+
+/* Имя вошедшего ведёт на управление менеджерами. Шестым пунктом главной
+   навигации это было бы лишним: сюда заходят раз в месяц. */
+.nav__me {
+  margin-left: 10px;
+  padding-left: 14px;
+  border-left: 1px solid var(--line);
+  color: var(--t2);
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav__me:hover { color: var(--t1); text-decoration: none; }
+.nav__me[aria-current="page"] { color: var(--accent); }
+
+.person { margin-bottom: 14px; }
+.person__row { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.person__who { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.person__who b { font-size: 15.5px; }
+.person__mail { flex-basis: 100%; color: var(--t3); font-size: 13px; }
+.person__seen { margin-left: auto; color: var(--t3); font-size: 13px; }
+
+.person__form {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.person__form:last-child { border-bottom: 0; padding-bottom: 0; }
+
+@media (max-width: 700px) {
+  .person__seen { margin-left: 0; flex-basis: 100%; }
+  .person__form > .btn { width: 100%; }
+}
+
+/* Счётчик ожидающих в шапке. Появляется, только когда кто-то ждёт: пустой
+   ноль в навигации — это шум, на который перестают смотреть. */
+.queue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  margin-left: -12px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--warm);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  animation: queue-in 0.35s var(--spring);
+}
+.queue:hover { text-decoration: none; filter: brightness(1.08); }
+
+@keyframes queue-in {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .queue { animation: none; }
+}

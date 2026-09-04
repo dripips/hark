@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dripips/hark/internal/notify"
 	"github.com/dripips/hark/internal/store"
 	"github.com/dripips/hark/internal/tools"
 	"github.com/go-chi/chi/v5"
@@ -309,7 +310,60 @@ func (s *Server) botAnswers(w http.ResponseWriter, r *http.Request) {
 	if bot == nil {
 		return
 	}
-	s.botPage(w, r, bot, "answers", "bot-answers.html", nil)
+	s.botPage(w, r, bot, "answers", "bot-answers.html", map[string]any{
+		"Notify": notify.ParseTarget(bot.Notify),
+		"Tested": r.URL.Query().Get("tested"),
+	})
+}
+
+// notifyTest звонит по настроенному адресу прямо сейчас и показывает исход.
+//
+// Кнопка шлёт настоящее тело на настоящий адрес, а не проверяет, что адрес
+// похож на адрес. Мост может ответить «200» и ничего человеку не показать —
+// поэтому проверяется «дошло до человека», а не «сервер жив».
+func (s *Server) notifyTest(w http.ResponseWriter, r *http.Request) {
+	bot := s.botFromURL(w, r)
+	if bot == nil {
+		return
+	}
+
+	target := targetFromForm(r)
+	if !target.Enabled() {
+		http.Redirect(w, r, fmt.Sprintf("/bots/%d/answers?tested=%s", bot.ID,
+			url.QueryEscape("Адрес не задан")), http.StatusSeeOther)
+		return
+	}
+
+	// Сохраняем то, что в форме: иначе человек проверит одно, а сохранит другое.
+	if raw, err := json.Marshal(target); err == nil {
+		bot.Notify = string(raw)
+		_ = s.DB.SaveBot(r.Context(), bot)
+	}
+
+	event := s.notifyEvent(r, bot, nil, "проверка настройки из админки", true)
+	status := s.Notify.Send(target, event)
+	_ = s.DB.NoteNotify(r.Context(), bot.ID, status)
+
+	http.Redirect(w, r, fmt.Sprintf("/bots/%d/answers?tested=%s",
+		bot.ID, url.QueryEscape(status)), http.StatusSeeOther)
+}
+
+func targetFromForm(r *http.Request) notify.Target {
+	return notify.ParseTarget(mustJSON(notify.Target{
+		URL:      strings.TrimSpace(r.FormValue("notify_url")),
+		Method:   r.FormValue("notify_method"),
+		Headers:  strings.TrimSpace(r.FormValue("notify_headers")),
+		Template: r.FormValue("notify_template"),
+		Quiet:    r.FormValue("notify_quiet") == "on",
+	}))
+}
+
+func mustJSON(value any) string {
+	raw, err := json.Marshal(value)
+	if err != nil {
+		return ""
+	}
+	return string(raw)
 }
 
 func (s *Server) botModel(w http.ResponseWriter, r *http.Request) {
@@ -379,6 +433,7 @@ func (s *Server) botAnswersSave(w http.ResponseWriter, r *http.Request) {
 	bot.Greeting = r.FormValue("greeting")
 	bot.EscalateAfter = atoiDefault(r.FormValue("escalate_after"), 2)
 	bot.Enabled = r.FormValue("enabled") == "on"
+	bot.Notify = mustJSON(targetFromForm(r))
 	s.saveAndBack(w, r, bot, "answers")
 }
 

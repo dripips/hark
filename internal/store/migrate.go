@@ -31,6 +31,16 @@ var columnAdditions = []struct {
 	{"bots", "corner_radius", "INTEGER NOT NULL DEFAULT 18"},
 	// Вся внешность одним JSON: новые ручки дизайна не требуют миграции.
 	{"bots", "theme", "TEXT NOT NULL DEFAULT ''"},
+	// Когда менеджер последний раз заходил: по этой отметке видно, кто на
+	// связи, а кто завёлся и больше не появлялся.
+	{"managers", "last_seen", "TEXT"},
+	// Зов наружу при эскалации: адрес, способ, заголовки и шаблон одним JSON.
+	{"bots", "notify", "TEXT NOT NULL DEFAULT ''"},
+	// Исход последнего зова пишет фоновая горутина узким UPDATE, поэтому он
+	// живёт отдельными колонками: попади он в общий JSON — затирался бы
+	// сохранением настроек, и наоборот.
+	{"bots", "notify_last_at", "TEXT"},
+	{"bots", "notify_last_status", "TEXT NOT NULL DEFAULT ''"},
 }
 
 func migrate(db *sql.DB) error {

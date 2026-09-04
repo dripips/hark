@@ -63,6 +63,40 @@ The bot gives up through a tool call, not through phrase matching. It says so ex
 
 ![The queue](screenshots/03-inbox.png)
 
+## When the bot gives up
+
+The conversation joins a queue for a human, and you find out two ways at once.
+
+An open admin tab gets the event over a stream: the count in the header grows, the tab title becomes "(3) Overview", a short sound plays. Nothing to configure; it works out of the box. The event carries the whole queue rather than "one more", so a dropped event, a sleeping laptop and a server restart all heal themselves.
+
+![The waiting queue in the header](screenshots/17-queue-badge.png)
+
+If nobody is keeping the admin open, Hark calls one address that you filled in yourself. There is no Telegram and no email inside Hark, and there won't be: Telegram is what you get by pasting `api.telegram.org/bot<token>/sendMessage`, and email is what you get by running your own bridge next to it. The button beside the field places a real call and shows you what came back.
+
+![Where to report](screenshots/18-notify.png)
+
+What leaves the machine is the fact, not the conversation: the bot, the reason, the queue depth and a link into the admin. The reason is written by the model and may paraphrase the visitor, so a "no reason" box leaves only the count and the link.
+
+Recording an escalation no longer depends on the visitor's request still being alive. A tab closed mid-sentence used to produce the worst outcome available: the visitor got "I'm handing you to a person" while the conversation stayed out of the queue, and the person nobody called never came.
+
+## Managers
+
+Who signs into the admin and answers when the bot gives up. There are no roles: everyone sees every conversation and can remove anyone else.
+
+![Managers](screenshots/15-managers.png)
+
+You cannot remove yourself, and you cannot remove the last manager: nobody could sign in afterwards, and recovery would need access to the machine. Changing a password kills that person's other sessions, because the reason you change one is often that someone else has it.
+
+The first manager is created from the command line:
+
+```bash
+./hark -manager you@example.com -password secret
+./hark -managers                                       # who already exists
+./hark -manager you@example.com -password new -reset   # change a password
+```
+
+Without `-reset`, running it again with the same address refuses and tells you what to do instead. It used to change that person's password silently and lock them out.
+
 ## The widget
 
 One tag on your page:

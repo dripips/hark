@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{.Title}} · Hark</title>
 <link rel="stylesheet" href="/static/app.css">
+<script src="/static/alerts.js" defer></script>
 <link rel="icon" href="data:,">
 </head>
 <body>
@@ -15,9 +16,15 @@
     <nav class="nav">
       <a href="/" {{if eq .Path "/"}}aria-current="page"{{end}}>Обзор</a>
       <a href="/inbox" {{if eq .Path "/inbox"}}aria-current="page"{{end}}>Разговоры</a>
+      {{/* Счётчик — отдельная ссылка рядом, а не внутри: вложенная ссылка
+           недопустима, и браузер разобрал бы её по-своему. Ведёт сразу в
+           отфильтрованный список ждущих. */}}
+      <a class="queue" href="/inbox?state=waiting" data-queue="{{.Waiting}}"
+         title="Ждут человека" {{if not .Waiting}}hidden{{end}}>{{.Waiting}}</a>
       <a href="/bots" {{if eq .Path "/bots"}}aria-current="page"{{end}}>Боты</a>
       <a href="/connections" {{if eq .Path "/connections"}}aria-current="page"{{end}}>Подключения</a>
       <a href="/analytics" {{if eq .Path "/analytics"}}aria-current="page"{{end}}>Аналитика</a>
+      <a class="nav__me" href="/managers" {{if eq .Path "/managers"}}aria-current="page"{{end}}>{{.Manager}}</a>
       <form method="post" action="/logout" style="margin-left:8px">
         <button class="btn btn--ghost btn--small" type="submit">Выйти</button>
       </form>

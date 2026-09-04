@@ -97,6 +97,9 @@ func (s *Server) parseTemplates() error {
 		},
 		"lines": func(s string) []string { return strings.Split(s, "\n") },
 		"sub":   func(a, b int) int { return a - b },
+		// Исход зова наружу начинается со слова «доставлено», когда он удался:
+		// по нему страница выбирает, красить плашку зелёным или красным.
+		"hasPrefix": strings.HasPrefix,
 	}
 
 	parsed, err := template.New("").Funcs(funcs).ParseFS(assets, "templates/*.html")
@@ -113,6 +116,16 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, dat
 	}
 	data["Manager"] = managerName(r)
 	data["Path"] = r.URL.Path
+
+	// Счётчик ожидающих считает сервер при каждом показе страницы, а не
+	// хранит рядом. Индекс по (state, updated_at) уже есть, запрос дешёвый,
+	// зато цифра верна и с выключенным JavaScript, и сразу после перезапуска.
+	if currentManager(r) != nil {
+		if _, ok := data["Waiting"]; !ok {
+			count, _ := s.DB.CountWaiting(r.Context())
+			data["Waiting"] = count
+		}
+	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.templates.ExecuteTemplate(w, name, data); err != nil {

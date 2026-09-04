@@ -63,6 +63,40 @@ Der Bot gibt per Werkzeugaufruf auf, nicht per Phrasenabgleich. Er sagt es ausdr
 
 ![Die Warteschlange](screenshots/03-inbox.png)
 
+## Wenn der Bot aufgibt
+
+Das Gespräch reiht sich in die Warteschlange für einen Menschen ein, und davon erfährt man gleich auf zwei Wegen.
+
+Ein offener Reiter der Verwaltung bekommt das Ereignis als Strom: die Zahl in der Kopfzeile wächst, der Reitertitel wird zu „(3) Übersicht“, ein kurzer Ton erklingt. Einzustellen gibt es dafür nichts, es läuft nach der Installation. Das Ereignis trägt nicht „einer mehr“, sondern die ganze Schlange, deshalb heilen ein verlorenes Ereignis, ein eingeschlafener Rechner und ein Neustart des Servers von selbst.
+
+![Die Warteschlange in der Kopfzeile](screenshots/17-queue-badge.png)
+
+Hält niemand die Verwaltung offen, ruft Hark eine einzige Adresse auf, die Sie selbst eingetragen haben. Telegram und E-Mail stecken nicht in Hark und werden es nicht: Telegram entsteht dadurch, dass Sie `api.telegram.org/bot<Token>/sendMessage` einsetzen, E-Mail dadurch, dass daneben Ihre eigene Brücke steht. Die Schaltfläche neben dem Feld ruft wirklich an und zeigt, was zurückkam.
+
+![Wohin melden](screenshots/18-notify.png)
+
+Nach außen geht die Tatsache, nicht das Gespräch: Bot, Grund, Länge der Schlange und ein Link in die Verwaltung. Den Grund schreibt das Modell, und er kann die Worte des Besuchers wiedergeben — das Häkchen „ohne Grund“ lässt nur Zähler und Link übrig.
+
+Ob eine Eskalation festgehalten wird, hängt nicht mehr davon ab, ob die Anfrage des Besuchers noch lebt. Ein mitten im Satz geschlossener Reiter führte früher zum denkbar schlechtesten Ausgang: Der Besucher bekam „Ich übergebe an einen Menschen“, das Gespräch blieb außerhalb der Schlange, und den versprochenen Menschen rief niemand.
+
+## Betreuer
+
+Wer sich in die Verwaltung einloggt und antwortet, wenn der Bot aufgibt. Rollen gibt es nicht: Jeder sieht alle Gespräche und kann jeden anderen entfernen.
+
+![Betreuer](screenshots/15-managers.png)
+
+Sich selbst kann man nicht entfernen und den letzten Betreuer auch nicht: Danach käme niemand mehr hinein, und die Rettung ginge nur noch über den Server selbst. Ein Passwortwechsel beendet die übrigen Sitzungen dieser Person, denn man wechselt es oft gerade deshalb, weil jemand anderes es hat.
+
+Den ersten Betreuer legt man auf der Kommandozeile an:
+
+```bash
+./hark -manager you@example.com -password geheim
+./hark -managers                                        # wer schon da ist
+./hark -manager you@example.com -password neu -reset    # Passwort ändern
+```
+
+Ohne `-reset` verweigert ein zweiter Aufruf mit derselben Adresse den Dienst und sagt, was stattdessen zu tun ist. Früher änderte er das Passwort stillschweigend und sperrte die Person aus.
+
 ## Das Widget
 
 Ein Tag auf der Seite:

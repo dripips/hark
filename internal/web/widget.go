@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/dripips/hark/internal/notify"
 	"github.com/dripips/hark/internal/store"
 )
 
@@ -210,6 +212,14 @@ func (s *Server) widgetSend(w http.ResponseWriter, r *http.Request) {
 	sendEvent(w, flusher, "message", map[string]any{
 		"id": reply.Message.ID, "text": reply.Message.Text, "role": "assistant",
 	})
+	if reply.Escalated {
+		// Бот сдался. Открытые вкладки админки узнают об этом сейчас, а не
+		// когда кто-нибудь надумает обновить страницу.
+		s.notifyQueue(r)
+		// А если админку никто не держит открытой — уходит зов наружу.
+		s.fireNotify(r, bot, conv, reply.Reason)
+	}
+
 	sendEvent(w, flusher, "done", map[string]any{
 		"escalated": reply.Escalated,
 		"state":     stateAfter(reply.Escalated),
@@ -415,4 +425,47 @@ func fade(color string, alpha float64) string {
 		return color
 	}
 	return fmt.Sprintf("rgba(%d,%d,%d,%.2f)", r, g, b, alpha)
+}
+
+// fireNotify зовёт человека наружу. Кладёт событие в очередь отправителя и
+// сразу возвращается: ответ посетителю не имеет права ждать чужой сервер.
+func (s *Server) fireNotify(r *http.Request, bot *store.Bot, conv *store.Conversation, reason string) {
+	target := notify.ParseTarget(bot.Notify)
+	if !target.Enabled() {
+		return
+	}
+	s.Notify.Fire(target, s.notifyEvent(r, bot, conv, reason, false))
+}
+
+func (s *Server) notifyEvent(r *http.Request, bot *store.Bot, conv *store.Conversation,
+	reason string, test bool) notify.Event {
+
+	event := notify.Event{
+		BotID: bot.ID, BotName: bot.Name, BotSlug: bot.Slug,
+		Reason: reason, At: time.Now(), Test: test,
+	}
+	if conv != nil {
+		event.ConvID = conv.ID
+		event.PageURL = conv.PageURL
+		event.AdminURL = fmt.Sprintf("%s/conversations/%d", publicBase(r), conv.ID)
+	} else {
+		event.AdminURL = publicBase(r) + "/inbox?state=waiting"
+	}
+	event.Waiting, _ = s.DB.WaitingCount(r.Context(), bot.ID)
+	return event
+}
+
+// publicBase — адрес, по которому админка видна снаружи. Берётся из запроса,
+// потому что своего адреса Hark не знает и спрашивать его отдельной настройкой
+// значит завести поле, которое однажды разойдётся с действительностью.
+func publicBase(r *http.Request) string {
+	scheme := "http"
+	if r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https") {
+		scheme = "https"
+	}
+	host := r.Header.Get("X-Forwarded-Host")
+	if host == "" {
+		host = r.Host
+	}
+	return scheme + "://" + host
 }

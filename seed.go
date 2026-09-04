@@ -29,7 +29,7 @@ func seedDemo(db *store.DB) error {
 		return err
 	}
 
-	hash, err := web.HashPassword("hark")
+	hash, err := web.HashPassword("hark-demo")
 	if err != nil {
 		return err
 	}
@@ -307,6 +307,6 @@ func seedConversations(ctx context.Context, db *store.DB, bot *store.Bot) error 
 	}
 
 	fmt.Println("демонстрационные данные готовы")
-	fmt.Println("вход: manager@example.com / hark")
+	fmt.Println("вход: manager@example.com / hark-demo")
 	return nil
 }

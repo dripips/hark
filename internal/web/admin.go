@@ -196,6 +196,8 @@ func (s *Server) conversationReply(w http.ResponseWriter, r *http.Request) {
 	}
 	// Ответил человек — разговор остаётся за человеком, пока его не вернут боту.
 	_ = s.DB.SetConversationState(r.Context(), id, "human", "")
+	// Разговор ушёл из очереди: у коллег цифра падает, и видно, что его взяли.
+	s.notifyQueue(r)
 	http.Redirect(w, r, "/conversations/"+chi.URLParam(r, "id"), http.StatusSeeOther)
 }
 
@@ -205,6 +207,7 @@ func (s *Server) conversationState(w http.ResponseWriter, r *http.Request) {
 	switch state {
 	case "open", "waiting", "human", "closed":
 		_ = s.DB.SetConversationState(r.Context(), id, state, r.FormValue("reason"))
+		s.notifyQueue(r)
 	}
 	http.Redirect(w, r, "/conversations/"+chi.URLParam(r, "id"), http.StatusSeeOther)
 }
