@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/dripips/hark/internal/chat"
+	"github.com/dripips/hark/internal/lang"
 	"github.com/dripips/hark/internal/notify"
 	"github.com/dripips/hark/internal/store"
 	"github.com/go-chi/chi/v5"
@@ -127,6 +128,7 @@ func (s *Server) routes() {
 		r.Post("/managers/{id}/rename", s.managerRename)
 		r.Post("/managers/{id}/password", s.managerPassword)
 		r.Post("/managers/{id}/delete", s.managerDelete)
+		r.Post("/managers/lang", s.managerLang)
 	})
 
 	s.router = r
@@ -184,6 +186,18 @@ func currentManager(r *http.Request) *store.Manager {
 func currentToken(r *http.Request) string {
 	token, _ := r.Context().Value(tokenKey).(string)
 	return token
+}
+
+// language выбирает язык страницы.
+//
+// Порядок: выбор менеджера → язык браузера → русский. Первое живёт в базе и
+// переживает смену устройства, второе избавляет от настройки того, кто зашёл
+// впервые, третье — язык, на котором написан продукт.
+func language(r *http.Request) string {
+	if manager := currentManager(r); manager != nil && manager.Lang != "" {
+		return lang.Pick(manager.Lang)
+	}
+	return lang.FromHeader(r.Header.Get("Accept-Language"))
 }
 
 func managerName(r *http.Request) string {

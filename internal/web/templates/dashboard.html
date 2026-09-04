@@ -1,19 +1,19 @@
 {{template "head" .}}
-<h1>Обзор</h1>
-<p class="lede">Последняя неделя</p>
+<h1>{{t $.L `Обзор`}}</h1>
+<p class="lede">{{t $.L `Последняя неделя`}}</p>
 
 <div class="grid grid--3" style="margin-bottom:26px">
   <div class="card">
     <div class="stat__value">{{.Summary.Dialogues}}</div>
-    <div class="stat__label">{{plural .Summary.Dialogues "разговор" "разговора" "разговоров"}}</div>
+    <div class="stat__label">{{plural $.L .Summary.Dialogues "разговор" "разговора" "разговоров"}}</div>
   </div>
   <div class="card">
     <div class="stat__value">{{.Summary.Escalated}}</div>
-    <div class="stat__label">передано человеку</div>
+    <div class="stat__label">{{t $.L `передано человеку`}}</div>
   </div>
   <div class="card">
     <div class="stat__value">{{money .Summary.Cost}}</div>
-    <div class="stat__label">потрачено на модель</div>
+    <div class="stat__label">{{t $.L `потрачено на модель`}}</div>
     {{if .Summary.ReasoningShare}}
     <div class="stat__note">{{.Summary.ReasoningShare}}% вывода — рассуждение, его не видно в ответах</div>
     {{end}}
@@ -21,13 +21,13 @@
 </div>
 
 {{if .Waiting}}
-<h2>Ждут человека</h2>
+<h2>{{t $.L `Ждут человека`}}</h2>
 <div class="card" style="margin-bottom:26px;padding:0">
   <table>
     <tbody>
     {{range .Waiting}}
       <tr>
-        <td style="width:120px"><span class="pill pill--wait">ждёт</span></td>
+        <td style="width:120px"><span class="pill pill--wait">{{t $.L `ждёт`}}</span></td>
         <td><a href="/conversations/{{.ID}}">{{trimTo 70 .EscalateReason}}</a></td>
         <td class="muted mono" style="width:150px">{{when .UpdatedAt}}</td>
       </tr>
@@ -37,20 +37,20 @@
 </div>
 {{end}}
 
-<h2>Последние разговоры</h2>
+<h2>{{t $.L `Последние разговоры`}}</h2>
 <div class="card" style="padding:0">
   <table>
-    <thead><tr><th>Состояние</th><th>Начат</th><th>Страница</th><th>Обновлён</th></tr></thead>
+    <thead><tr><th>{{t $.L `Состояние`}}</th><th>{{t $.L `Начат`}}</th><th>{{t $.L `Страница`}}</th><th>{{t $.L `Обновлён`}}</th></tr></thead>
     <tbody>
     {{range .Recent}}
       <tr>
-        <td><span class="pill {{if eq .State "waiting"}}pill--wait{{else if eq .State "human"}}pill--human{{end}}">{{stateName .State}}</span></td>
+        <td><span class="pill {{if eq .State "waiting"}}pill--wait{{else if eq .State "human"}}pill--human{{end}}">{{stateName $.L .State}}</span></td>
         <td><a href="/conversations/{{.ID}}">{{when .CreatedAt}}</a></td>
         <td class="muted mono">{{trimTo 44 .PageURL}}</td>
         <td class="muted mono">{{when .UpdatedAt}}</td>
       </tr>
     {{else}}
-      <tr><td colspan="4" class="empty">Разговоров пока нет.</td></tr>
+      <tr><td colspan="4" class="empty">{{t $.L `Разговоров пока нет.`}}</td></tr>
     {{end}}
     </tbody>
   </table>

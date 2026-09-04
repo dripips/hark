@@ -81,10 +81,23 @@ type Bot struct {
 	// Theme — вся внешность одним JSON. Разбор в Design().
 	Theme string
 
+	// Lang — на каком языке бот говорит с посетителем. Отдельно от языка
+	// админки: владелец смотрит её по-русски, а сайт держит английский.
+	Lang string
+
 	// Notify — куда звонить, когда бот сдался. Тоже одним JSON: см. Theme.
 	Notify           string
 	NotifyLastAt     sql.NullString
 	NotifyLastStatus string
+}
+
+// LangOr — язык бота с отступлением на русский. Пустое поле встречается у
+// ботов, заведённых до появления языка.
+func (b Bot) LangOr() string {
+	if b.Lang == "" {
+		return "ru"
+	}
+	return b.Lang
 }
 
 // Quick разбирает готовые вопросы: по одному в строке, пустые пропускаются.
@@ -196,7 +209,7 @@ const botColumns = `id, slug, name, instructions, greeting, provider, base_url, 
 	accent, position, launcher_text, allowed_origins, escalate_after, enabled,
 	welcome_title, welcome_text, quick_replies, disclaimer, privacy_url, privacy_label,
 	launcher_style, avatar_emoji, corner_radius, theme,
-	notify, notify_last_at, notify_last_status`
+	notify, notify_last_at, notify_last_status, lang`
 
 func scanBot(row interface{ Scan(...any) error }) (*Bot, error) {
 	var b Bot
@@ -206,7 +219,7 @@ func scanBot(row interface{ Scan(...any) error }) (*Bot, error) {
 		&b.AllowedOrigins, &b.EscalateAfter, &b.Enabled,
 		&b.WelcomeTitle, &b.WelcomeText, &b.QuickReplies, &b.Disclaimer,
 		&b.PrivacyURL, &b.PrivacyLabel, &b.LauncherStyle, &b.AvatarEmoji, &b.CornerRadius, &b.Theme,
-		&b.Notify, &b.NotifyLastAt, &b.NotifyLastStatus)
+		&b.Notify, &b.NotifyLastAt, &b.NotifyLastStatus, &b.Lang)
 	if err != nil {
 		return nil, err
 	}
@@ -247,15 +260,15 @@ func (db *DB) SaveBot(ctx context.Context, b *Bot) error {
 				api_key, max_tokens, temperature, reasoning, capabilities, price_in, price_out,
 				accent, position, launcher_text, allowed_origins, escalate_after, enabled,
 				welcome_title, welcome_text, quick_replies, disclaimer, privacy_url,
-				privacy_label, launcher_style, avatar_emoji, corner_radius, theme, notify)
-			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+				privacy_label, launcher_style, avatar_emoji, corner_radius, theme, notify, lang)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			b.Slug, b.Name, b.Instructions, b.Greeting, b.Provider, b.BaseURL, b.Model,
 			b.APIKey, b.MaxTokens, b.Temperature, b.Reasoning, b.Capabilities,
 			b.PriceIn, b.PriceOut, b.Accent, b.Position, b.LauncherText,
 			b.AllowedOrigins, b.EscalateAfter, b.Enabled,
 			b.WelcomeTitle, b.WelcomeText, b.QuickReplies, b.Disclaimer,
 			b.PrivacyURL, b.PrivacyLabel, b.LauncherStyle, b.AvatarEmoji, b.CornerRadius,
-			b.Theme, b.Notify)
+			b.Theme, b.Notify, b.LangOr())
 		if err != nil {
 			return err
 		}
@@ -268,7 +281,7 @@ func (db *DB) SaveBot(ctx context.Context, b *Bot) error {
 			price_in=?, price_out=?, accent=?, position=?, launcher_text=?, allowed_origins=?,
 			escalate_after=?, enabled=?, welcome_title=?, welcome_text=?, quick_replies=?,
 			disclaimer=?, privacy_url=?, privacy_label=?, launcher_style=?, avatar_emoji=?,
-			corner_radius=?, theme=?, notify=?, updated_at=datetime('now')
+			corner_radius=?, theme=?, notify=?, lang=?, updated_at=datetime('now')
 		WHERE id=?`,
 		b.Slug, b.Name, b.Instructions, b.Greeting, b.Provider, b.BaseURL, b.Model,
 		b.APIKey, b.MaxTokens, b.Temperature, b.Reasoning, b.Capabilities,
@@ -276,7 +289,7 @@ func (db *DB) SaveBot(ctx context.Context, b *Bot) error {
 		b.EscalateAfter, b.Enabled,
 		b.WelcomeTitle, b.WelcomeText, b.QuickReplies, b.Disclaimer,
 		b.PrivacyURL, b.PrivacyLabel, b.LauncherStyle, b.AvatarEmoji, b.CornerRadius,
-		b.Theme, b.Notify, b.ID)
+		b.Theme, b.Notify, b.LangOr(), b.ID)
 	return err
 }
 

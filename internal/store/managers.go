@@ -18,6 +18,9 @@ type Manager struct {
 	Name      string
 	CreatedAt string
 	LastSeen  sql.NullString
+	// Lang — на каком языке человек хочет видеть админку. Пусто означает
+	// «как в браузере»: навязывать русский тому, кто зашёл впервые, незачем.
+	Lang string
 }
 
 // ErrLastManager — попытка убрать последнего человека, который может войти.
@@ -30,11 +33,11 @@ var ErrLastManager = errors.New("это последний менеджер: б�
 // ErrManagerExists — почта уже занята.
 var ErrManagerExists = errors.New("менеджер с такой почтой уже заведён")
 
-const managerColumns = `id, email, name, created_at, last_seen`
+const managerColumns = `id, email, name, created_at, last_seen, lang`
 
 func scanManager(row interface{ Scan(...any) error }) (*Manager, error) {
 	var m Manager
-	if err := row.Scan(&m.ID, &m.Email, &m.Name, &m.CreatedAt, &m.LastSeen); err != nil {
+	if err := row.Scan(&m.ID, &m.Email, &m.Name, &m.CreatedAt, &m.LastSeen, &m.Lang); err != nil {
 		return nil, err
 	}
 	return &m, nil
@@ -106,6 +109,12 @@ func (db *DB) CreateManager(ctx context.Context, email, name, hash string) (*Man
 		return nil, err
 	}
 	return db.ManagerByID(ctx, id)
+}
+
+// SetManagerLang запоминает выбор языка.
+func (db *DB) SetManagerLang(ctx context.Context, id int64, code string) error {
+	_, err := db.ExecContext(ctx, `UPDATE managers SET lang = ? WHERE id = ?`, code, id)
+	return err
 }
 
 func (db *DB) RenameManager(ctx context.Context, id int64, name string) error {

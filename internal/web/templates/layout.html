@@ -14,19 +14,19 @@
   <div class="wrap top__row">
     <a class="brand" href="/">hark<span>.</span></a>
     <nav class="nav">
-      <a href="/" {{if eq .Path "/"}}aria-current="page"{{end}}>Обзор</a>
+      <a href="/" {{if eq .Path "/"}}aria-current="page"{{end}}>{{t $.L `Обзор`}}</a>
       {{/* Счётчик внутри самой ссылки, а не отдельной рядом: снаружи он лез
            отрицательным отступом на подсветку текущей страницы. Ссылка в
            ссылку недопустима, а span в ссылке — обычное дело. */}}
-      <a href="/inbox" {{if eq .Path "/inbox"}}aria-current="page"{{end}}>Разговоры{{" "}}
-        <span class="queue" data-queue="{{.Waiting}}" title="Ждут человека"
+      <a href="/inbox" {{if eq .Path "/inbox"}}aria-current="page"{{end}}>{{t $.L `Разговоры`}}{{" "}}
+        <span class="queue" data-queue="{{.Waiting}}" title="{{t $.L `Ждут человека`}}"
               {{if not .Waiting}}hidden{{end}}>{{.Waiting}}</span></a>
-      <a href="/bots" {{if eq .Path "/bots"}}aria-current="page"{{end}}>Боты</a>
-      <a href="/connections" {{if eq .Path "/connections"}}aria-current="page"{{end}}>Подключения</a>
-      <a href="/analytics" {{if eq .Path "/analytics"}}aria-current="page"{{end}}>Аналитика</a>
+      <a href="/bots" {{if eq .Path "/bots"}}aria-current="page"{{end}}>{{t $.L `Боты`}}</a>
+      <a href="/connections" {{if eq .Path "/connections"}}aria-current="page"{{end}}>{{t $.L `Подключения`}}</a>
+      <a href="/analytics" {{if eq .Path "/analytics"}}aria-current="page"{{end}}>{{t $.L `Аналитика`}}</a>
       <a class="nav__me" href="/managers" {{if eq .Path "/managers"}}aria-current="page"{{end}}>{{.Manager}}</a>
       <form method="post" action="/logout" style="margin-left:8px">
-        <button class="btn btn--ghost btn--small" type="submit">Выйти</button>
+        <button class="btn btn--ghost btn--small" type="submit">{{t $.L `Выйти`}}</button>
       </form>
     </nav>
   </div>
@@ -42,11 +42,11 @@
 <div class="bothead">
   <div class="bothead__row">
     <div>
-      <a class="bothead__back" href="/bots">Боты</a>
+      <a class="bothead__back" href="/bots">{{t $.L `Боты`}}</a>
       <h1>{{.Bot.Name}}</h1>
       <p class="lede">
         <span class="mono">{{.Bot.Provider}} · {{.Bot.Model}}</span>
-        {{if not .Bot.Enabled}}<span class="pill pill--off">выключен</span>{{end}}
+        {{if not .Bot.Enabled}}<span class="pill pill--off">{{t $.L `выключен`}}</span>{{end}}
       </p>
     </div>
   </div>
@@ -66,19 +66,23 @@
 {{end}}
 
 {{/* Один шаг чека: обращение к модели, вызов инструмента или сбой. */}}
+{{/* Шагу чека приходит не корень, а сам шаг, поэтому $ внутри указывает не
+     туда. Язык передаём рядом: {{template "step" (pair $.L .)}}. */}}
 {{define "step"}}
+{{$L := .L}}{{with .V}}
 <div class="step step--{{.Kind}}">
   <div class="step__kind">
-    <b>{{stepName .Kind}}</b>
+    <b>{{stepName $L .Kind}}</b>
     {{if .TookMS}}{{ms .TookMS}}{{end}}
   </div>
   <div>
     <div class="step__name">{{.Name}}{{if .Status}} <span class="muted">· {{.Status}}</span>{{end}}</div>
     {{if .Detail}}<div class="step__detail">{{.Detail}}</div>{{end}}
-    {{if .Request}}<div class="io"><b>ушло</b>
+    {{if .Request}}<div class="io"><b>{{t $L `ушло`}}</b>
 {{.Request}}</div>{{end}}
-    {{if .Response}}<div class="io"><b>вернулось</b>
+    {{if .Response}}<div class="io"><b>{{t $L `вернулось`}}</b>
 {{.Response}}</div>{{end}}
   </div>
 </div>
+{{end}}
 {{end}}

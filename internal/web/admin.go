@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/dripips/hark/internal/chat"
+	"github.com/dripips/hark/internal/lang"
 	"github.com/dripips/hark/internal/llm"
 	"github.com/dripips/hark/internal/store"
 	"github.com/go-chi/chi/v5"
@@ -25,7 +26,7 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {
 	summary := s.summary(ctx, 7)
 
 	s.render(w, r, "dashboard.html", map[string]any{
-		"Title": "Обзор", "Bots": bots, "Waiting": waiting,
+		"Title": lang.T(language(r), "Обзор"), "Bots": bots, "Waiting": waiting,
 		"Recent": recent, "Summary": summary,
 	})
 }
@@ -36,7 +37,7 @@ func (s *Server) botList(w http.ResponseWriter, r *http.Request) {
 	// одним запросом на всю страницу, а не по обращению на карточку.
 	counts, _ := s.DB.ToolCounts(r.Context())
 	s.render(w, r, "bots.html", map[string]any{
-		"Title": "Боты", "Bots": bots, "ToolCounts": counts,
+		"Title": lang.T(language(r), "Боты"), "Bots": bots, "ToolCounts": counts,
 	})
 }
 
@@ -148,7 +149,7 @@ func (s *Server) inbox(w http.ResponseWriter, r *http.Request) {
 	claims, _ := s.DB.ClaimNames(r.Context())
 
 	s.render(w, r, "inbox.html", map[string]any{
-		"Title": "Разговоры", "Conversations": rows, "BotNames": names, "State": state,
+		"Title": lang.T(language(r), "Разговоры"), "Conversations": rows, "BotNames": names, "State": state,
 		"Claims": claims,
 	})
 }
@@ -187,7 +188,7 @@ func (s *Server) conversation(w http.ResponseWriter, r *http.Request) {
 	mine := claimed && me != nil && conv.ClaimedBy.Valid && conv.ClaimedBy.Int64 == me.ID
 
 	s.render(w, r, "conversation.html", map[string]any{
-		"Title": "Разговор", "Conversation": conv, "Bot": bot, "Lines": lines,
+		"Title": lang.T(language(r), "Разговор"), "Conversation": conv, "Bot": bot, "Lines": lines,
 		"ClaimedBy": claimedBy, "Claimed": claimed, "Mine": mine,
 		// Проигравший гонку приходит сюда с именем победителя в адресе.
 		"Taken":     r.URL.Query().Get("taken"),
@@ -298,7 +299,7 @@ func (s *Server) analytics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.render(w, r, "analytics.html", map[string]any{
-		"Title": "Аналитика", "Series": series, "Days": days,
+		"Title": lang.T(language(r), "Аналитика"), "Series": series, "Days": days,
 		"Summary": s.summary(ctx, days),
 	})
 }

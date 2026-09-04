@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dripips/hark/internal/lang"
 	"github.com/dripips/hark/internal/notify"
 	"github.com/dripips/hark/internal/store"
 )
@@ -152,6 +153,9 @@ func (s *Server) widgetConfig(w http.ResponseWriter, r *http.Request) {
 		"privacy_url":    bot.PrivacyURL,
 		"privacy_label":  bot.PrivacyLabel,
 		"design":         designPayload(bot),
+		// Подписи виджета считает сервер, а не браузер: словари зашиты в
+		// бинарник, и таскать их на чужую страницу незачем.
+		"ui": widgetStrings(bot.LangOr()),
 	})
 }
 
@@ -239,7 +243,7 @@ func (s *Server) widgetSend(w http.ResponseWriter, r *http.Request) {
 	// ленту и ждёт менеджера.
 	if conv.State == "human" || conv.State == "waiting" {
 		sendEvent(w, flusher, "waiting", map[string]any{
-			"text": "Сообщение передано менеджеру.",
+			"text": lang.T(bot.LangOr(), "Сообщение передано менеджеру."),
 		})
 		sendEvent(w, flusher, "done", map[string]any{"state": conv.State})
 		return
@@ -518,4 +522,24 @@ func publicBase(r *http.Request) string {
 		host = r.Host
 	}
 	return scheme + "://" + host
+}
+
+// widgetStrings — всё, что видит посетитель и чего не задал владелец.
+//
+// Язык берётся у бота, а не у админки: владелец может смотреть настройки
+// по-русски, а его покупатели говорить по-английски. Пустые значения виджет
+// подставляет сам, поэтому список короткий.
+func widgetStrings(code string) map[string]string {
+	return map[string]string{
+		"chat":     lang.T(code, "Чат"),
+		"ask":      lang.T(code, "Спросить"),
+		"close":    lang.T(code, "Закрыть"),
+		"send":     lang.T(code, "Отправить"),
+		"input":    lang.T(code, "Напишите сообщение…"),
+		"privacy":  lang.T(code, "политика конфиденциальности"),
+		"no_start": lang.T(code, "Не получилось начать разговор."),
+		"dropped":  lang.T(code, "Связь оборвалась. Попробуйте ещё раз."),
+		"no_reply": lang.T(code, "Не получилось ответить."),
+		"queued":   lang.T(code, "Сообщение передано менеджеру."),
+	}
 }

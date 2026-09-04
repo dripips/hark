@@ -139,6 +139,21 @@ Werte des Themas landen direkt im CSS des Widgets und werden deshalb an einer St
 
 Im Rahmen rechts läuft das Widget selbst, kein Entwurf — dieselbe Datei und derselbe Endpunkt für die Einstellungen, die auch die Seite bekommt. Auseinanderlaufen kann da nichts.
 
+## Sprachen
+
+Verwaltung und Widget sprechen Russisch und Englisch. Die Sprache der Oberfläche wählt jeder Betreuer für sich: In einem Team sitzen mitunter ein russisch- und ein englischsprachiger Mensch, und eine gemeinsame Einstellung würde einen von beiden leiden lassen.
+
+Die Sprache des Bots wird getrennt gesetzt, im Reiter „Wie er antwortet“. Sie bestimmt die Beschriftungen im Widget und die Regeln, die das Modell liest: Russische Regeln ziehen eine russische Antwort selbst auf einer englischen Seite, und daran ändern Anweisungen nichts.
+
+Eine Sprache hinzuzufügen heißt, eine Datei zu übersetzen:
+
+```bash
+go run ./cmd/locale            # was da ist und was fehlt
+go run ./cmd/locale fr > internal/lang/locales/fr.json
+```
+
+Der Schlüssel der Übersetzung ist die russische Ausgangszeile selbst, wie bei gettext. So sieht man in der Vorlage, was ausgegeben wird, ohne im Wörterbuch nachzuschlagen, und eine nicht übersetzte Zeile bleibt russisch, statt zu `nav.bots` zu werden. Einen Preis hat das: Ändert man die russische Formulierung, reißt die Verbindung zur Übersetzung. `go test ./internal/lang` fängt das ab und meldet sowohl Lücken als auch verwaiste Zeilen.
+
 ## Installation
 
 ```bash

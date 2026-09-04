@@ -2,12 +2,12 @@
 
 <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:26px">
   <div>
-    <h1>Боты</h1>
-    <p class="lede" style="margin:0">Один бот — один сайт или раздел. У каждого свои подключения, модель и внешность.</p>
+    <h1>{{t $.L `Боты`}}</h1>
+    <p class="lede" style="margin:0">{{t $.L `Один бот — один сайт или раздел. У каждого свои подключения, модель и внешность.`}}</p>
   </div>
   {{if .Bots}}
   <form method="post" action="/bots" style="margin-left:auto">
-    <button class="btn" type="submit">Новый бот</button>
+    <button class="btn" type="submit">{{t $.L `Новый бот`}}</button>
   </form>
   {{end}}
 </div>
@@ -18,7 +18,7 @@
   <div class="card">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <h2 style="margin:0">{{.Name}}</h2>
-      {{if not .Enabled}}<span class="pill pill--off">выключен</span>{{end}}
+      {{if not .Enabled}}<span class="pill pill--off">{{t $.L `выключен`}}</span>{{end}}
     </div>
     <p class="muted mono" style="margin:0 0 12px">{{.Provider}} · {{.Model}}</p>
     {{/* Сколько подключений — то же, что «знает или догадывается». Без них бот
@@ -27,15 +27,15 @@
     {{$counts := index $.ToolCounts .ID}}
     <p class="botcard__conn">
       {{if $counts}}
-        {{index $counts 0}} {{plural (index $counts 0) "подключение" "подключения" "подключений"}}{{if lt (index $counts 1) (index $counts 0)}}, включено {{index $counts 1}}{{end}}
+        {{index $counts 0}} {{plural $.L (index $counts 0) "подключение" "подключения" "подключений"}}{{if lt (index $counts 1) (index $counts 0)}}{{t $.L `, включено %d` (index $counts 1)}}{{end}}
       {{else}}
-        без подключений — отвечает только по инструкциям
+        {{t $.L `без подключений — отвечает только по инструкциям`}}
       {{end}}
     </p>
     <p style="color:var(--t2);margin:0 0 16px">{{trimTo 140 .Instructions}}</p>
-    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/connections">Подключения</a>
-    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/answers">Как отвечает</a>
-    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/widget">Внешность</a>
+    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/connections">{{t $.L `Подключения`}}</a>
+    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/answers">{{t $.L `Как отвечает`}}</a>
+    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/widget">{{t $.L `Внешность`}}</a>
   </div>
 {{end}}
 </div>
@@ -44,13 +44,12 @@
      установки. Текстом тут не отделаться: нужна кнопка, иначе продукт
      упирается в тупик на первом же шаге. */}}
 <div class="card" style="text-align:center;padding:44px 24px">
-  <h2 style="margin:0 0 8px">Здесь пока пусто</h2>
+  <h2 style="margin:0 0 8px">{{t $.L `Здесь пока пусто`}}</h2>
   <p class="lede" style="max-width:440px;margin:0 auto 22px">
-    Заведите первого бота: дальше можно написать инструкции, подключить свой API
-    или базу данных и поставить виджет на сайт.
+    {{t $.L `Заведите первого бота: дальше можно написать инструкции, подключить свой API или базу данных и поставить виджет на сайт.`}}
   </p>
   <form method="post" action="/bots">
-    <button class="btn" type="submit">Завести бота</button>
+    <button class="btn" type="submit">{{t $.L `Завести бота`}}</button>
   </form>
 </div>
 {{end}}

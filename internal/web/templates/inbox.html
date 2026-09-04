@@ -1,22 +1,22 @@
 {{template "head" .}}
-<h1>Разговоры</h1>
-<p class="lede">Ждущие человека всегда сверху.</p>
+<h1>{{t $.L `Разговоры`}}</h1>
+<p class="lede">{{t $.L `Ждущие человека всегда сверху.`}}</p>
 
 <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-  <a class="btn btn--ghost btn--small" href="/inbox">Все</a>
-  <a class="btn btn--ghost btn--small" href="/inbox?state=waiting">Ждут человека</a>
-  <a class="btn btn--ghost btn--small" href="/inbox?state=human">У менеджера</a>
-  <a class="btn btn--ghost btn--small" href="/inbox?state=open">Ведёт бот</a>
+  <a class="btn btn--ghost btn--small" href="/inbox">{{t $.L `Все`}}</a>
+  <a class="btn btn--ghost btn--small" href="/inbox?state=waiting">{{t $.L `Ждут человека`}}</a>
+  <a class="btn btn--ghost btn--small" href="/inbox?state=human">{{t $.L `У менеджера`}}</a>
+  <a class="btn btn--ghost btn--small" href="/inbox?state=open">{{t $.L `Ведёт бот`}}</a>
 </div>
 
 <div class="card" style="padding:0">
   <table>
-    <thead><tr><th>Состояние</th><th>Причина или страница</th><th>Кто взял</th><th>Начат</th><th>Обновлён</th></tr></thead>
+    <thead><tr><th>{{t $.L `Состояние`}}</th><th>{{t $.L `Причина или страница`}}</th><th>{{t $.L `Кто взял`}}</th><th>{{t $.L `Начат`}}</th><th>{{t $.L `Обновлён`}}</th></tr></thead>
     <tbody>
     {{range .Conversations}}
       <tr>
         <td style="width:150px">
-          <span class="pill {{if eq .State "waiting"}}pill--wait{{else if eq .State "human"}}pill--human{{end}}">{{stateName .State}}</span>
+          <span class="pill {{if eq .State "waiting"}}pill--wait{{else if eq .State "human"}}pill--human{{end}}">{{stateName $.L .State}}</span>
         </td>
         <td>
           <a href="/conversations/{{.ID}}">
@@ -32,7 +32,7 @@
         <td class="muted mono" style="width:150px">{{when .UpdatedAt}}</td>
       </tr>
     {{else}}
-      <tr><td colspan="5" class="empty">Ничего не найдено.</td></tr>
+      <tr><td colspan="5" class="empty">{{t $.L `Ничего не найдено.`}}</td></tr>
     {{end}}
     </tbody>
   </table>

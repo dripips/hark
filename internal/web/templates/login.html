@@ -1,19 +1,19 @@
 {{template "head" .}}
 <div style="max-width:380px;margin:80px auto">
   <h1 style="text-align:center">hark<span style="color:var(--accent)">.</span></h1>
-  <p class="lede" style="text-align:center">Вход для менеджера</p>
+  <p class="lede" style="text-align:center">{{t $.L `Вход для менеджера`}}</p>
   <div class="card">
     <form method="post" action="/login">
       {{if .Error}}<p style="color:var(--danger);margin:0 0 14px">{{.Error}}</p>{{end}}
       <div class="field">
-        <label for="email">Почта</label>
+        <label for="email">{{t $.L `Почта`}}</label>
         <input id="email" type="email" name="email" required autofocus>
       </div>
       <div class="field">
-        <label for="password">Пароль</label>
+        <label for="password">{{t $.L `Пароль`}}</label>
         <input id="password" type="password" name="password" required>
       </div>
-      <button class="btn" type="submit" style="width:100%;justify-content:center">Войти</button>
+      <button class="btn" type="submit" style="width:100%;justify-content:center">{{t $.L `Войти`}}</button>
     </form>
   </div>
 </div>

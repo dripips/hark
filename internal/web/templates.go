@@ -7,11 +7,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dripips/hark/internal/lang"
 	"github.com/dripips/hark/internal/store"
 )
 
 func (s *Server) parseTemplates() error {
 	funcs := template.FuncMap{
+		// Перевод подписи. Ключ — сама русская строка: см. internal/lang.
+		"t": lang.T,
+		// Пара «язык плюс значение» для вложенных шаблонов, которым на вход
+		// приходит не корень и $ внутри указывает не туда.
+		// Название языка на нём самом: список на чужом языке бесполезен
+		// ровно тому, кто ищет в нём свой.
+		"langTitle": lang.Title,
+		"pair": func(l string, v any) map[string]any {
+			return map[string]any{"L": l, "V": v}
+		},
 		// Деньги хранятся в микрорублях. Один ответ стоит доли копейки, а
 		// месячный итог — сотни рублей, поэтому точность выбирается по величине:
 		// иначе либо всё нули, либо хвост из шести знаков.
@@ -44,51 +55,54 @@ func (s *Server) parseTemplates() error {
 			}
 			return parsed.Format("02.01.2006 15:04")
 		},
-		"stateName": func(state string) string {
+		"stateName": func(l, state string) string {
 			switch state {
 			case "waiting":
-				return "ждёт человека"
+				return lang.T(l, "ждёт человека")
 			case "human":
-				return "отвечает человек"
+				return lang.T(l, "отвечает человек")
 			case "closed":
-				return "закрыт"
+				return lang.T(l, "закрыт")
 			default:
-				return "ведёт бот"
+				return lang.T(l, "ведёт бот")
 			}
 		},
-		"roleName": func(role string) string {
+		"roleName": func(l, role string) string {
 			switch role {
 			case "user":
-				return "посетитель"
+				return lang.T(l, "посетитель")
 			case "human":
-				return "менеджер"
+				return lang.T(l, "менеджер")
 			case "assistant":
-				return "бот"
+				return lang.T(l, "бот")
 			default:
 				return role
 			}
 		},
-		"stepName": func(kind string) string {
+		"stepName": func(l, kind string) string {
 			switch kind {
 			case "model":
-				return "модель"
+				return lang.T(l, "модель")
 			case "tool":
-				return "инструмент"
+				return lang.T(l, "подключение")
 			default:
-				return "сбой"
+				return lang.T(l, "сбой")
 			}
 		},
-		"plural": func(n int, one, few, many string) string {
+		// Множественное число. Формы перечислены по-русски: их три, и они же
+		// служат ключами перевода. В языке с двумя формами перевод у «дня» и
+		// «дней» просто совпадёт — это дешевле, чем таблица правил на язык.
+		"plural": func(l string, n int, one, few, many string) string {
 			mod100, mod10 := n%100, n%10
 			switch {
 			case mod100 >= 11 && mod100 <= 14:
-				return many
+				return lang.T(l, many)
 			case mod10 == 1:
-				return one
+				return lang.T(l, one)
 			case mod10 >= 2 && mod10 <= 4:
-				return few
+				return lang.T(l, few)
 			default:
-				return many
+				return lang.T(l, many)
 			}
 		},
 		"trimTo": func(limit int, s string) string { return store.Clip(s, limit) },
@@ -113,6 +127,8 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, dat
 	}
 	data["Manager"] = managerName(r)
 	data["Path"] = r.URL.Path
+	data["L"] = language(r)
+	data["Languages"] = lang.Codes()
 
 	// Счётчик ожидающих считает сервер при каждом показе страницы, а не
 	// хранит рядом. Индекс по (state, updated_at) уже есть, запрос дешёвый,

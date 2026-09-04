@@ -11,94 +11,93 @@
     <input type="hidden" name="theme" id="theme">
 
     <div class="card">
-      <h2 style="margin-top:0">Готовые наборы</h2>
-      <p class="field__hint" style="margin:0 0 14px">Ставит все ручки разом. Дальше правьте что угодно.</p>
+      <h2 style="margin-top:0">{{t $.L `Готовые наборы`}}</h2>
+      <p class="field__hint" style="margin:0 0 14px">{{t $.L `Ставит все ручки разом. Дальше правьте что угодно.`}}</p>
       <div class="presets">
-        <button class="preset" type="button" data-preset="clean">Чистый</button>
-        <button class="preset" type="button" data-preset="night">Ночь</button>
-        <button class="preset" type="button" data-preset="paper">Бумага</button>
-        <button class="preset" type="button" data-preset="soft">Мягкий</button>
-        <button class="preset" type="button" data-preset="terminal">Терминал</button>
+        <button class="preset" type="button" data-preset="clean">{{t $.L `Чистый`}}</button>
+        <button class="preset" type="button" data-preset="night">{{t $.L `Ночь`}}</button>
+        <button class="preset" type="button" data-preset="paper">{{t $.L `Бумага`}}</button>
+        <button class="preset" type="button" data-preset="soft">{{t $.L `Мягкий`}}</button>
+        <button class="preset" type="button" data-preset="terminal">{{t $.L `Терминал`}}</button>
       </div>
     </div>
 
     <div class="card">
-      <h2 style="margin-top:0">Кнопка на сайте</h2>
+      <h2 style="margin-top:0">{{t $.L `Кнопка на сайте`}}</h2>
       <div class="row">
         <div class="field">
-          <label for="launcher_style">Вид</label>
+          <label for="launcher_style">{{t $.L `Вид`}}</label>
           <select id="launcher_style" name="launcher_style">
-            <option value="pill" {{if eq .Bot.LauncherStyle "pill"}}selected{{end}}>с подписью</option>
-            <option value="round" {{if eq .Bot.LauncherStyle "round"}}selected{{end}}>круглая</option>
+            <option value="pill" {{if eq .Bot.LauncherStyle "pill"}}selected{{end}}>{{t $.L `с подписью`}}</option>
+            <option value="round" {{if eq .Bot.LauncherStyle "round"}}selected{{end}}>{{t $.L `круглая`}}</option>
           </select>
         </div>
         <div class="field">
-          <label for="position">Угол</label>
+          <label for="position">{{t $.L `Угол`}}</label>
           <select id="position" name="position">
-            <option value="right" {{if eq .Bot.Position "right"}}selected{{end}}>справа</option>
-            <option value="left" {{if eq .Bot.Position "left"}}selected{{end}}>слева</option>
+            <option value="right" {{if eq .Bot.Position "right"}}selected{{end}}>{{t $.L `справа`}}</option>
+            <option value="left" {{if eq .Bot.Position "left"}}selected{{end}}>{{t $.L `слева`}}</option>
           </select>
         </div>
         <div class="field" style="max-width:120px">
-          <label for="avatar_emoji">Значок</label>
+          <label for="avatar_emoji">{{t $.L `Значок`}}</label>
           <input id="avatar_emoji" type="text" name="avatar_emoji" value="{{.Bot.AvatarEmoji}}" maxlength="4" placeholder="🙂">
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label for="launcher_text">Надпись</label>
-          <input id="launcher_text" type="text" name="launcher_text" value="{{.Bot.LauncherText}}" placeholder="Спросить">
+          <label for="launcher_text">{{t $.L `Надпись`}}</label>
+          <input id="launcher_text" type="text" name="launcher_text" value="{{.Bot.LauncherText}}" placeholder="{{t $.L `Спросить`}}">
         </div>
         <div class="field">
-          <label for="offset">Отступ от края <output>{{$d.Offset}}px</output></label>
+          <label for="offset">{{t $.L `Отступ от края`}} <output>{{$d.Offset}}px</output></label>
           <input id="offset" type="range" name="offset" data-theme="offset"
                  value="{{$d.Offset}}" min="8" max="48" step="2" data-unit="px">
-          <div class="field__hint">Чтобы кнопка не налезала на плашку о куки или корзину.</div>
+          <div class="field__hint">{{t $.L `Чтобы кнопка не налезала на плашку о куки или корзину.`}}</div>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <h2 style="margin-top:0">Шрифт</h2>
+      <h2 style="margin-top:0">{{t $.L `Шрифт`}}</h2>
       <div class="field">
-        <label for="font">Набор</label>
+        <label for="font">{{t $.L `Набор`}}</label>
         <select id="font" name="font" data-theme="font">
-          <option value="system" {{if eq $d.Font "system"}}selected{{end}}>Системный</option>
-          <option value="inherit" {{if eq $d.Font "inherit"}}selected{{end}}>Как на сайте</option>
+          <option value="system" {{if eq $d.Font "system"}}selected{{end}}>{{t $.L `Системный`}}</option>
+          <option value="inherit" {{if eq $d.Font "inherit"}}selected{{end}}>{{t $.L `Как на сайте`}}</option>
           <option value="inter" {{if eq $d.Font "inter"}}selected{{end}}>Inter</option>
-          <option value="geometric" {{if eq $d.Font "geometric"}}selected{{end}}>Геометрический гротеск</option>
-          <option value="rounded" {{if eq $d.Font "rounded"}}selected{{end}}>Скруглённый</option>
-          <option value="serif" {{if eq $d.Font "serif"}}selected{{end}}>С засечками</option>
-          <option value="mono" {{if eq $d.Font "mono"}}selected{{end}}>Моноширинный</option>
-          <option value="custom" {{if eq $d.Font "custom"}}selected{{end}}>Свой</option>
+          <option value="geometric" {{if eq $d.Font "geometric"}}selected{{end}}>{{t $.L `Геометрический гротеск`}}</option>
+          <option value="rounded" {{if eq $d.Font "rounded"}}selected{{end}}>{{t $.L `Скруглённый`}}</option>
+          <option value="serif" {{if eq $d.Font "serif"}}selected{{end}}>{{t $.L `С засечками`}}</option>
+          <option value="mono" {{if eq $d.Font "mono"}}selected{{end}}>{{t $.L `Моноширинный`}}</option>
+          <option value="custom" {{if eq $d.Font "custom"}}selected{{end}}>{{t $.L `Свой`}}</option>
         </select>
         <div class="field__hint">
-          «Как на сайте» берёт шрифт страницы, куда поставлен виджет: ничего не грузится,
-          и вставка не выглядит чужой.
+          {{t $.L `«Как на сайте» берёт шрифт страницы, куда поставлен виджет: ничего не грузится, и вставка не выглядит чужой.`}}
         </div>
       </div>
       <div class="row" data-when-font="custom">
         <div class="field">
-          <label for="font_stack">Название шрифта</label>
+          <label for="font_stack">{{t $.L `Название шрифта`}}</label>
           <input id="font_stack" type="text" name="font_stack" data-theme="font_stack" value="{{$d.FontStack}}"
                  placeholder="Manrope">
-          <div class="field__hint">Если он уже подключён на самом сайте, этого достаточно.</div>
+          <div class="field__hint">{{t $.L `Если он уже подключён на самом сайте, этого достаточно.`}}</div>
         </div>
         <div class="field">
-          <label for="font_url">Ссылка на CSS шрифта</label>
+          <label for="font_url">{{t $.L `Ссылка на CSS шрифта`}}</label>
           <input id="font_url" type="text" name="font_url" data-theme="font_url" value="{{$d.FontURL}}"
                  placeholder="https://fonts.googleapis.com/css2?family=...">
-          <div class="field__hint">Запрос на чужой домен с чужой страницы: его может не пустить сайт. Только https.</div>
+          <div class="field__hint">{{t $.L `Запрос на чужой домен с чужой страницы: его может не пустить сайт. Только https.`}}</div>
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label for="font_size">Кегль <output>{{$d.FontSize}}px</output></label>
+          <label for="font_size">{{t $.L `Кегль`}} <output>{{$d.FontSize}}px</output></label>
           <input id="font_size" type="range" name="font_size" data-theme="font_size"
                  value="{{$d.FontSize}}" min="13" max="19" step="1" data-unit="px">
         </div>
         <div class="field">
-          <label for="line_height">Межстрочный <output>{{$d.LineHeight}}</output></label>
+          <label for="line_height">{{t $.L `Межстрочный`}} <output>{{$d.LineHeight}}</output></label>
           <input id="line_height" type="range" name="line_height" data-theme="line_height"
                  value="{{$d.LineHeight}}" min="1.25" max="1.8" step="0.05">
         </div>
@@ -106,59 +105,59 @@
     </div>
 
     <div class="card">
-      <h2 style="margin-top:0">Отступы и размер</h2>
+      <h2 style="margin-top:0">{{t $.L `Отступы и размер`}}</h2>
       <div class="field">
-        <label for="density">Плотность</label>
+        <label for="density">{{t $.L `Плотность`}}</label>
         <select id="density" name="density" data-theme="density">
-          <option value="compact" {{if eq $d.Density "compact"}}selected{{end}}>Плотно</option>
-          <option value="normal" {{if eq $d.Density "normal"}}selected{{end}}>Обычно</option>
-          <option value="roomy" {{if eq $d.Density "roomy"}}selected{{end}}>Просторно</option>
+          <option value="compact" {{if eq $d.Density "compact"}}selected{{end}}>{{t $.L `Плотно`}}</option>
+          <option value="normal" {{if eq $d.Density "normal"}}selected{{end}}>{{t $.L `Обычно`}}</option>
+          <option value="roomy" {{if eq $d.Density "roomy"}}selected{{end}}>{{t $.L `Просторно`}}</option>
         </select>
-        <div class="field__hint">Двигает сразу все отступы: они считаются от одного шага сетки.</div>
+        <div class="field__hint">{{t $.L `Двигает сразу все отступы: они считаются от одного шага сетки.`}}</div>
       </div>
       <div class="row">
         <div class="field">
-          <label for="width">Ширина <output>{{$d.Width}}px</output></label>
+          <label for="width">{{t $.L `Ширина`}} <output>{{$d.Width}}px</output></label>
           <input id="width" type="range" name="width" data-theme="width"
                  value="{{$d.Width}}" min="320" max="460" step="4" data-unit="px">
         </div>
         <div class="field">
-          <label for="height">Высота <output>{{$d.Height}}px</output></label>
+          <label for="height">{{t $.L `Высота`}} <output>{{$d.Height}}px</output></label>
           <input id="height" type="range" name="height" data-theme="height"
                  value="{{$d.Height}}" min="420" max="680" step="10" data-unit="px">
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label for="radius">Скругление окна <output>{{$d.Radius}}px</output></label>
+          <label for="radius">{{t $.L `Скругление окна`}} <output>{{$d.Radius}}px</output></label>
           <input id="radius" type="range" name="radius" data-theme="radius"
                  value="{{$d.Radius}}" min="0" max="28" step="1" data-unit="px">
         </div>
         <div class="field">
-          <label for="bubble">Скругление реплик <output>{{$d.Bubble}}px</output></label>
+          <label for="bubble">{{t $.L `Скругление реплик`}} <output>{{$d.Bubble}}px</output></label>
           <input id="bubble" type="range" name="bubble" data-theme="bubble"
                  value="{{$d.Bubble}}" min="0" max="22" step="1" data-unit="px">
         </div>
       </div>
       <div class="field">
-        <label for="shadow">Тень</label>
+        <label for="shadow">{{t $.L `Тень`}}</label>
         <select id="shadow" name="shadow" data-theme="shadow">
-          <option value="none" {{if eq $d.Shadow "none"}}selected{{end}}>Без тени, с рамкой</option>
-          <option value="soft" {{if eq $d.Shadow "soft"}}selected{{end}}>Мягкая</option>
-          <option value="deep" {{if eq $d.Shadow "deep"}}selected{{end}}>Глубокая</option>
+          <option value="none" {{if eq $d.Shadow "none"}}selected{{end}}>{{t $.L `Без тени, с рамкой`}}</option>
+          <option value="soft" {{if eq $d.Shadow "soft"}}selected{{end}}>{{t $.L `Мягкая`}}</option>
+          <option value="deep" {{if eq $d.Shadow "deep"}}selected{{end}}>{{t $.L `Глубокая`}}</option>
         </select>
-        <div class="field__hint">Без тени панель теряла бы край, поэтому вместо неё появляется волосяная линия.</div>
+        <div class="field__hint">{{t $.L `Без тени панель теряла бы край, поэтому вместо неё появляется волосяная линия.`}}</div>
       </div>
     </div>
 
     <div class="card">
-      <h2 style="margin-top:0">Цвета</h2>
+      <h2 style="margin-top:0">{{t $.L `Цвета`}}</h2>
       <div class="field">
-        <label for="scheme">Схема</label>
+        <label for="scheme">{{t $.L `Схема`}}</label>
         <select id="scheme" name="scheme" data-theme="scheme">
-          <option value="light" {{if eq $d.Scheme "light"}}selected{{end}}>Светлая всегда</option>
-          <option value="dark" {{if eq $d.Scheme "dark"}}selected{{end}}>Тёмная всегда</option>
-          <option value="auto" {{if eq $d.Scheme "auto"}}selected{{end}}>Как на устройстве</option>
+          <option value="light" {{if eq $d.Scheme "light"}}selected{{end}}>{{t $.L `Светлая всегда`}}</option>
+          <option value="dark" {{if eq $d.Scheme "dark"}}selected{{end}}>{{t $.L `Тёмная всегда`}}</option>
+          <option value="auto" {{if eq $d.Scheme "auto"}}selected{{end}}>{{t $.L `Как на устройстве`}}</option>
         </select>
       </div>
 
@@ -166,182 +165,180 @@
            реплики бота выводятся из полотна и текста. Поэтому они наверху,
            а производные — ниже, под галочкой. */}}
       <div class="swatches">
-        <label class="swatch"><span>Основной</span>
+        <label class="swatch"><span>{{t $.L `Основной`}}</span>
           <input type="color" name="accent" data-theme="accent" value="{{$d.Accent}}"></label>
-        <label class="swatch"><span>Полотно</span>
+        <label class="swatch"><span>{{t $.L `Полотно`}}</span>
           <input type="color" name="surface" data-theme="surface" value="{{$d.Surface}}"></label>
-        <label class="swatch"><span>Текст</span>
+        <label class="swatch"><span>{{t $.L `Текст`}}</span>
           <input type="color" name="text" data-theme="text" value="{{$d.Text}}"></label>
       </div>
 
       <details class="tune" {{if or (index $set "muted") (index $set "bot_bubble") (index $set "user_bubble")}}open{{end}}>
-        <summary>Остальные цвета</summary>
+        <summary>{{t $.L `Остальные цвета`}}</summary>
         <p class="field__hint" style="margin:10px 0 14px">
-          Пока стоит «авто», они пересчитываются при смене полотна и текста. Снимите галочку, чтобы задать своё.
+          {{t $.L `Пока стоит «авто», они пересчитываются при смене полотна и текста. Снимите галочку, чтобы задать своё.`}}
         </p>
         <div class="swatches">
           {{/* auto — не украшение: с явным значением цвет замирает и перестаёт
                следовать за полотном, и тёмный фон получает светлые линии. */}}
-          <div class="swatch"><span>Текст на основном</span>
+          <div class="swatch"><span>{{t $.L `Текст на основном`}}</span>
             <input type="color" name="on_accent" data-theme="on_accent" value="{{$d.OnAccent}}">
-            <label class="swatch__auto"><input type="checkbox" data-auto="on_accent" {{if not (index $set "on_accent")}}checked{{end}}> авто</label></div>
-          <div class="swatch"><span>Приглушённый</span>
+            <label class="swatch__auto"><input type="checkbox" data-auto="on_accent" {{if not (index $set "on_accent")}}checked{{end}}> {{t $.L `авто`}}</label></div>
+          <div class="swatch"><span>{{t $.L `Приглушённый`}}</span>
             <input type="color" name="muted" data-theme="muted" value="{{$d.Muted}}">
-            <label class="swatch__auto"><input type="checkbox" data-auto="muted" {{if not (index $set "muted")}}checked{{end}}> авто</label></div>
-          <div class="swatch"><span>Линии</span>
+            <label class="swatch__auto"><input type="checkbox" data-auto="muted" {{if not (index $set "muted")}}checked{{end}}> {{t $.L `авто`}}</label></div>
+          <div class="swatch"><span>{{t $.L `Линии`}}</span>
             <input type="color" name="border" data-theme="border" value="{{$d.Border}}">
-            <label class="swatch__auto"><input type="checkbox" data-auto="border" {{if not (index $set "border")}}checked{{end}}> авто</label></div>
-          <div class="swatch"><span>Реплика бота</span>
+            <label class="swatch__auto"><input type="checkbox" data-auto="border" {{if not (index $set "border")}}checked{{end}}> {{t $.L `авто`}}</label></div>
+          <div class="swatch"><span>{{t $.L `Реплика бота`}}</span>
             <input type="color" name="bot_bubble" data-theme="bot_bubble" value="{{$d.BotBubble}}">
-            <label class="swatch__auto"><input type="checkbox" data-auto="bot_bubble" {{if not (index $set "bot_bubble")}}checked{{end}}> авто</label></div>
-          <div class="swatch"><span>Текст бота</span>
+            <label class="swatch__auto"><input type="checkbox" data-auto="bot_bubble" {{if not (index $set "bot_bubble")}}checked{{end}}> {{t $.L `авто`}}</label></div>
+          <div class="swatch"><span>{{t $.L `Текст бота`}}</span>
             <input type="color" name="bot_text" data-theme="bot_text" value="{{$d.BotText}}">
-            <label class="swatch__auto"><input type="checkbox" data-auto="bot_text" {{if not (index $set "bot_text")}}checked{{end}}> авто</label></div>
-          <div class="swatch"><span>Реплика гостя</span>
+            <label class="swatch__auto"><input type="checkbox" data-auto="bot_text" {{if not (index $set "bot_text")}}checked{{end}}> {{t $.L `авто`}}</label></div>
+          <div class="swatch"><span>{{t $.L `Реплика гостя`}}</span>
             <input type="color" name="user_bubble" data-theme="user_bubble" value="{{$d.UserBubble}}">
-            <label class="swatch__auto"><input type="checkbox" data-auto="user_bubble" {{if not (index $set "user_bubble")}}checked{{end}}> авто</label></div>
-          <div class="swatch"><span>Текст гостя</span>
+            <label class="swatch__auto"><input type="checkbox" data-auto="user_bubble" {{if not (index $set "user_bubble")}}checked{{end}}> {{t $.L `авто`}}</label></div>
+          <div class="swatch"><span>{{t $.L `Текст гостя`}}</span>
             <input type="color" name="user_text" data-theme="user_text" value="{{$d.UserText}}">
-            <label class="swatch__auto"><input type="checkbox" data-auto="user_text" {{if not (index $set "user_text")}}checked{{end}}> авто</label></div>
+            <label class="swatch__auto"><input type="checkbox" data-auto="user_text" {{if not (index $set "user_text")}}checked{{end}}> {{t $.L `авто`}}</label></div>
         </div>
       </details>
 
       <div data-when-scheme="auto" style="margin-top:18px">
-        <h3 style="margin:0 0 4px;font-size:14px">Когда у посетителя тёмная система</h3>
+        <h3 style="margin:0 0 4px;font-size:14px">{{t $.L `Когда у посетителя тёмная система`}}</h3>
         <p class="field__hint" style="margin:0 0 12px">
-          Выводить тёмные цвета из светлых — гадание: бежевая панель превращается в чужую серую.
-          Поэтому три цвета задаются, остальные считаются от них.
+          {{t $.L `Выводить тёмные цвета из светлых — гадание: бежевая панель превращается в чужую серую. Поэтому три цвета задаются, остальные считаются от них.`}}
         </p>
         <div class="swatches">
-          <label class="swatch"><span>Полотно</span>
+          <label class="swatch"><span>{{t $.L `Полотно`}}</span>
             <input type="color" name="dark_surface" data-theme="dark_surface" value="{{$d.DarkSurface}}"></label>
-          <label class="swatch"><span>Текст</span>
+          <label class="swatch"><span>{{t $.L `Текст`}}</span>
             <input type="color" name="dark_text" data-theme="dark_text" value="{{$d.DarkText}}"></label>
-          <label class="swatch"><span>Фон ленты</span>
+          <label class="swatch"><span>{{t $.L `Фон ленты`}}</span>
             <input type="color" name="dark_backdrop" data-theme="dark_backdrop" value="{{$d.DarkBackdrop}}"></label>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <h2 style="margin-top:0">Фон ленты</h2>
+      <h2 style="margin-top:0">{{t $.L `Фон ленты`}}</h2>
       <div class="field">
-        <label for="backdrop_kind">Чем залить</label>
+        <label for="backdrop_kind">{{t $.L `Чем залить`}}</label>
         <select id="backdrop_kind" name="backdrop_kind" data-theme="backdrop_kind">
-          <option value="solid" {{if eq $d.BackdropKind "solid"}}selected{{end}}>Сплошной цвет</option>
-          <option value="gradient" {{if eq $d.BackdropKind "gradient"}}selected{{end}}>Градиент</option>
-          <option value="dots" {{if eq $d.BackdropKind "dots"}}selected{{end}}>Точки</option>
-          <option value="grid" {{if eq $d.BackdropKind "grid"}}selected{{end}}>Сетка</option>
-          <option value="image" {{if eq $d.BackdropKind "image"}}selected{{end}}>Картинка</option>
+          <option value="solid" {{if eq $d.BackdropKind "solid"}}selected{{end}}>{{t $.L `Сплошной цвет`}}</option>
+          <option value="gradient" {{if eq $d.BackdropKind "gradient"}}selected{{end}}>{{t $.L `Градиент`}}</option>
+          <option value="dots" {{if eq $d.BackdropKind "dots"}}selected{{end}}>{{t $.L `Точки`}}</option>
+          <option value="grid" {{if eq $d.BackdropKind "grid"}}selected{{end}}>{{t $.L `Сетка`}}</option>
+          <option value="image" {{if eq $d.BackdropKind "image"}}selected{{end}}>{{t $.L `Картинка`}}</option>
         </select>
       </div>
       <div class="swatches">
-        <label class="swatch"><span>Основной</span>
+        <label class="swatch"><span>{{t $.L `Основной`}}</span>
           <input type="color" name="backdrop_from" data-theme="backdrop_from" value="{{$d.BackdropFrom}}"></label>
-        <label class="swatch" data-when-backdrop="gradient"><span>Второй</span>
+        <label class="swatch" data-when-backdrop="gradient"><span>{{t $.L `Второй`}}</span>
           <input type="color" name="backdrop_to" data-theme="backdrop_to" value="{{$d.BackdropTo}}"></label>
       </div>
       <div class="field" data-when-backdrop="gradient" style="margin-top:14px">
-        <label for="backdrop_angle">Угол <output>{{$d.BackdropAngle}}°</output></label>
+        <label for="backdrop_angle">{{t $.L `Угол`}} <output>{{$d.BackdropAngle}}°</output></label>
         <input id="backdrop_angle" type="range" name="backdrop_angle" data-theme="backdrop_angle"
                value="{{$d.BackdropAngle}}" min="0" max="360" step="5" data-unit="°">
       </div>
       <div class="field" data-when-backdrop="image" style="margin-top:14px">
-        <label for="backdrop_image">Адрес картинки</label>
+        <label for="backdrop_image">{{t $.L `Адрес картинки`}}</label>
         <input id="backdrop_image" type="text" name="backdrop_image" data-theme="backdrop_image"
                value="{{$d.BackdropImage}}" placeholder="https://example.com/pattern.png">
         <div class="field__hint">
-          Только https. Поверх картинки ложится пелена цвета полотна: без неё реплики
-          читаются ровно до первого светлого пятна.
+          {{t $.L `Только https. Поверх картинки ложится пелена цвета полотна: без неё реплики читаются ровно до первого светлого пятна.`}}
         </div>
       </div>
     </div>
 
     <div class="card">
-      <h2 style="margin-top:0">Шапка</h2>
+      <h2 style="margin-top:0">{{t $.L `Шапка`}}</h2>
       <div class="row">
         <div class="field">
-          <label for="header_kind">Заливка</label>
+          <label for="header_kind">{{t $.L `Заливка`}}</label>
           <select id="header_kind" name="header_kind" data-theme="header_kind">
-            <option value="accent" {{if eq $d.HeaderKind "accent"}}selected{{end}}>Основным цветом</option>
-            <option value="gradient" {{if eq $d.HeaderKind "gradient"}}selected{{end}}>Градиентом</option>
-            <option value="surface" {{if eq $d.HeaderKind "surface"}}selected{{end}}>Цветом полотна</option>
+            <option value="accent" {{if eq $d.HeaderKind "accent"}}selected{{end}}>{{t $.L `Основным цветом`}}</option>
+            <option value="gradient" {{if eq $d.HeaderKind "gradient"}}selected{{end}}>{{t $.L `Градиентом`}}</option>
+            <option value="surface" {{if eq $d.HeaderKind "surface"}}selected{{end}}>{{t $.L `Цветом полотна`}}</option>
           </select>
         </div>
         <div class="field">
-          <label for="subtitle">Подпись под названием</label>
+          <label for="subtitle">{{t $.L `Подпись под названием`}}</label>
           <input id="subtitle" type="text" name="subtitle" data-theme="subtitle" value="{{$d.Subtitle}}"
-                 maxlength="80" placeholder="Отвечаем круглосуточно">
+                 maxlength="80" placeholder="{{t $.L `Отвечаем круглосуточно`}}">
         </div>
       </div>
     </div>
 
     <div class="card">
-      <h2 style="margin-top:0">Приветствие</h2>
+      <h2 style="margin-top:0">{{t $.L `Приветствие`}}</h2>
       <div class="field">
-        <label for="welcome_title">Заголовок</label>
-        <input id="welcome_title" type="text" name="welcome_title" value="{{.Bot.WelcomeTitle}}" placeholder="Чем помочь?">
-        <div class="field__hint">Пусто во всех трёх полях — приветственного экрана не будет вовсе.</div>
+        <label for="welcome_title">{{t $.L `Заголовок`}}</label>
+        <input id="welcome_title" type="text" name="welcome_title" value="{{.Bot.WelcomeTitle}}" placeholder="{{t $.L `Чем помочь?`}}">
+        <div class="field__hint">{{t $.L `Пусто во всех трёх полях — приветственного экрана не будет вовсе.`}}</div>
       </div>
       <div class="field">
-        <label for="welcome_text">Текст</label>
+        <label for="welcome_text">{{t $.L `Текст`}}</label>
         <input id="welcome_text" type="text" name="welcome_text" value="{{.Bot.WelcomeText}}">
       </div>
       <div class="field">
-        <label for="quick_replies">Готовые вопросы</label>
+        <label for="quick_replies">{{t $.L `Готовые вопросы`}}</label>
         <textarea id="quick_replies" name="quick_replies" style="min-height:90px"
-                  placeholder="Где мой заказ?&#10;Как вернуть товар?">{{.Bot.QuickReplies}}</textarea>
-        <div class="field__hint">По одному в строке. Посетителю не придётся ничего печатать.</div>
+                  placeholder="{{t $.L `Где мой заказ?&#10;Как вернуть товар?`}}">{{.Bot.QuickReplies}}</textarea>
+        <div class="field__hint">{{t $.L `По одному в строке. Посетителю не придётся ничего печатать.`}}</div>
       </div>
     </div>
 
     <div class="card">
-      <h2 style="margin-top:0">Сноска и домены</h2>
+      <h2 style="margin-top:0">{{t $.L `Сноска и домены`}}</h2>
       <div class="field">
-        <label for="disclaimer">Оговорка под полем ввода</label>
+        <label for="disclaimer">{{t $.L `Оговорка под полем ввода`}}</label>
         <input id="disclaimer" type="text" name="disclaimer" value="{{.Bot.Disclaimer}}"
-               placeholder="Отвечает бот. Проверяйте важное.">
+               placeholder="{{t $.L `Отвечает бот. Проверяйте важное.`}}">
       </div>
       <div class="row">
         <div class="field">
-          <label for="privacy_url">Ссылка на политику</label>
+          <label for="privacy_url">{{t $.L `Ссылка на политику`}}</label>
           <input id="privacy_url" type="text" name="privacy_url" value="{{.Bot.PrivacyURL}}" placeholder="https://example.com/privacy">
         </div>
         <div class="field">
-          <label for="privacy_label">Подпись ссылки</label>
-          <input id="privacy_label" type="text" name="privacy_label" value="{{.Bot.PrivacyLabel}}" placeholder="Политика данных">
+          <label for="privacy_label">{{t $.L `Подпись ссылки`}}</label>
+          <input id="privacy_label" type="text" name="privacy_label" value="{{.Bot.PrivacyLabel}}" placeholder="{{t $.L `Политика данных`}}">
         </div>
       </div>
       <div class="field">
-        <label for="allowed_origins">Домены, где разрешён виджет</label>
+        <label for="allowed_origins">{{t $.L `Домены, где разрешён виджет`}}</label>
         <textarea id="allowed_origins" name="allowed_origins" style="min-height:70px"
                   placeholder="https://example.com">{{.Bot.AllowedOrigins}}</textarea>
-        <div class="field__hint">По одному в строке. Пусто — виджет работает на любом сайте.</div>
+        <div class="field__hint">{{t $.L `По одному в строке. Пусто — виджет работает на любом сайте.`}}</div>
       </div>
     </div>
 
     <div class="formbar formbar--sticky">
-      <button class="btn" type="submit">Сохранить</button>
-      <span class="field__hint" id="dirty" hidden>Справа показано несохранённое.</span>
+      <button class="btn" type="submit">{{t $.L `Сохранить`}}</button>
+      <span class="field__hint" id="dirty" hidden>{{t $.L `Справа показано несохранённое.`}}</span>
     </div>
   </form>
 
   <aside class="studio__side">
     <div class="studio__stick">
       <div class="studio__label">
-        <b>Предпросмотр</b>
-        <span class="field__hint">Настоящий виджет, тот же код</span>
+        <b>{{t $.L `Предпросмотр`}}</b>
+        <span class="field__hint">{{t $.L `Настоящий виджет, тот же код`}}</span>
       </div>
       {{/* Внутри рамки крутится не макет, а сам hark.js, и настройки он берёт
            через тот же обработчик, что и на сайте. Поэтому «сохранил — стало
            иначе» тут случиться не может. */}}
-      <iframe class="studio__frame" id="preview" title="Предпросмотр виджета"
+      <iframe class="studio__frame" id="preview" title="{{t $.L `Предпросмотр виджета`}}"
               src="/bots/{{.Bot.ID}}/widget/preview"></iframe>
 
       <div class="field" style="margin-top:18px">
-        <label>Как поставить</label>
+        <label>{{t $.L `Как поставить`}}</label>
         <div class="io">{{.Installed}}</div>
-        <div class="field__hint">Один тег перед &lt;/body&gt;. Больше ничего не нужно.</div>
+        <div class="field__hint">{{t $.L `Один тег перед &lt;/body&gt;. Больше ничего не нужно.`}}</div>
       </div>
     </div>
   </aside>

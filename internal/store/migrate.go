@@ -46,6 +46,11 @@ var columnAdditions = []struct {
 	// номер — читаем внешним соединением.
 	{"conversations", "claimed_by", "INTEGER"},
 	{"conversations", "claimed_at", "TEXT"},
+	// Язык админки у менеджера. Пусто — берётся из браузера.
+	{"managers", "lang", "TEXT NOT NULL DEFAULT ''"},
+	// Язык, на котором бот говорит с посетителем. Отдельно от языка админки:
+	// владелец может смотреть админку по-русски, а сайт держать английский.
+	{"bots", "lang", "TEXT NOT NULL DEFAULT 'ru'"},
 }
 
 func migrate(db *sql.DB) error {

@@ -45,6 +45,12 @@
     .catch(function () { /* бот выключен или домен не разрешён — молчим */ });
 
   function build(config) {
+    // Подписи считает сервер и присылает вместе с настройками: словари живут
+    // в бинарнике, и тащить их на чужую страницу незачем. Пустое значение
+    // означает «владелец задал своё» — тогда берётся оно.
+    var ui = config.ui || {};
+    var say = function (key, fallback) { return ui[key] || fallback; };
+
     var host = document.createElement('div');
     host.setAttribute('data-hark', slug);
     document.body.appendChild(host);
@@ -129,10 +135,10 @@
       button.type = 'button';
       button.className = 'hk__launch' + (round ? ' hk__launch--round' : '');
       button.setAttribute('aria-haspopup', 'dialog');
-      button.setAttribute('aria-label', config.launcher || config.name || 'Чат');
+      button.setAttribute('aria-label', config.launcher || config.name || say('chat', 'Чат'));
       button.appendChild(icon(round ? 26 : 18));
       if (!round) {
-        button.appendChild(document.createTextNode(config.launcher || 'Спросить'));
+        button.appendChild(document.createTextNode(config.launcher || say('ask', 'Спросить')));
       }
       return button;
     }
@@ -141,7 +147,7 @@
       var section = document.createElement('section');
       section.className = 'hk__panel';
       section.setAttribute('role', 'dialog');
-      section.setAttribute('aria-label', config.name || 'Чат');
+      section.setAttribute('aria-label', config.name || say('chat', 'Чат'));
       section.hidden = true;
 
       var head = document.createElement('header');
@@ -150,7 +156,7 @@
 
       var title = document.createElement('div');
       var name = document.createElement('b');
-      name.textContent = config.name || 'Чат';
+      name.textContent = config.name || say('chat', 'Чат');
       title.appendChild(name);
       if (design.subtitle) {
         var sub = document.createElement('small');
@@ -161,7 +167,7 @@
       var close = document.createElement('button');
       close.type = 'button';
       close.className = 'hk__close';
-      close.setAttribute('aria-label', 'Закрыть');
+      close.setAttribute('aria-label', say('close', 'Закрыть'));
       close.textContent = '×';
       head.appendChild(close);
       section.appendChild(head);
@@ -207,10 +213,10 @@
       formEl.className = 'hk__form';
       formEl.innerHTML =
         '<input class="hk__input" type="text" autocomplete="off">' +
-        '<button class="hk__send" type="submit" aria-label="Отправить">' +
+        '<button class="hk__send" type="submit" aria-label="' + say('send', 'Отправить') + '">' +
         '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
         '<path fill="currentColor" d="M3 20.5 21 12 3 3.5l3.2 7.1L14 12l-7.8 1.4z"/></svg></button>';
-      formEl.querySelector('.hk__input').placeholder = config.placeholder || 'Напишите сообщение…';
+      formEl.querySelector('.hk__input').placeholder = config.placeholder || say('input', 'Напишите сообщение…');
       section.appendChild(formEl);
 
       if (config.disclaimer || config.privacy_url) {
@@ -224,7 +230,7 @@
           link.href = config.privacy_url;
           link.target = '_blank';
           link.rel = 'noopener';
-          link.textContent = config.privacy_label || 'политика конфиденциальности';
+          link.textContent = config.privacy_label || say('privacy', 'политика конфиденциальности');
           note.appendChild(link);
         }
         section.appendChild(note);
@@ -281,7 +287,7 @@
           if (data.greeting && !hasWelcome) add('assistant', data.greeting);
           startPolling();
         })
-        .catch(function () { add('error', 'Не получилось начать разговор.'); });
+        .catch(function () { add('error', say('no_start', 'Не получилось начать разговор.')); });
     }
 
     function ask(text) {
@@ -327,7 +333,7 @@
         return pump();
       }).catch(function () {
         bubble.classList.remove('hk__msg--typing');
-        bubble.textContent = 'Связь оборвалась. Попробуйте ещё раз.';
+        bubble.textContent = say('dropped', 'Связь оборвалась. Попробуйте ещё раз.');
       });
     }
 
@@ -359,7 +365,7 @@
         bubble.textContent = payload.text;
       } else if (event === 'error') {
         bubble.classList.remove('hk__msg--typing');
-        bubble.textContent = 'Не получилось ответить.';
+        bubble.textContent = say('no_reply', 'Не получилось ответить.');
       }
     }
 

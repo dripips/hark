@@ -4,89 +4,102 @@
 <form method="post" action="/bots/{{.Bot.ID}}/answers">
   <div class="card">
     <div class="field">
-      <label for="name">Название</label>
+      <label for="name">{{t $.L `Название`}}</label>
       <input id="name" type="text" name="name" value="{{.Bot.Name}}" required>
-      <div class="field__hint">Видно посетителю в шапке окна.</div>
+      <div class="field__hint">{{t $.L `Видно посетителю в шапке окна.`}}</div>
     </div>
     <div class="field">
-      <label for="instructions">Инструкции</label>
+      <label for="instructions">{{t $.L `Инструкции`}}</label>
       <textarea id="instructions" name="instructions" style="min-height:190px">{{.Bot.Instructions}}</textarea>
       <div class="field__hint">
-        Кто бот, о чём говорит и чего не обещает. Правила про подключения Hark добавит сам.
+        {{t $.L `Кто бот, о чём говорит и чего не обещает. Правила про подключения Hark добавит сам.`}}
       </div>
     </div>
     <div class="field">
-      <label for="greeting">Первая реплика</label>
+      <label for="greeting">{{t $.L `Первая реплика`}}</label>
       <input id="greeting" type="text" name="greeting" value="{{.Bot.Greeting}}">
-      <div class="field__hint">Появляется до того, как посетитель что-то напишет. Пусто — лента открывается чистой.</div>
+      <div class="field__hint">{{t $.L `Появляется до того, как посетитель что-то напишет. Пусто — лента открывается чистой.`}}</div>
     </div>
   </div>
 
   <div class="card">
-    <h2 style="margin-top:0">Когда звать человека</h2>
+    <h2 style="margin-top:0">{{t $.L `Язык разговора`}}</h2>
+    <div class="field" style="max-width:280px;margin-bottom:0">
+      <label for="lang">{{t $.L `На каком языке бот говорит с посетителем`}}</label>
+      <select id="lang" name="lang">
+        {{$cur := .BotLang}}
+        {{range $.Languages}}
+        <option value="{{.}}" {{if eq . $cur}}selected{{end}}>{{langTitle .}}</option>
+        {{end}}
+      </select>
+      <div class="field__hint">
+        {{t $.L `Отдельно от языка админки. Задаёт подписи в виджете и правила, которые читает модель: русские правила тянут русский ответ даже на английском сайте.`}}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">{{t $.L `Когда звать человека`}}</h2>
     <div class="field" style="max-width:280px">
-      <label for="escalate_after">Сдаваться после скольких неудач</label>
+      <label for="escalate_after">{{t $.L `Сдаваться после скольких неудач`}}</label>
       <input id="escalate_after" type="number" name="escalate_after" value="{{.Bot.EscalateAfter}}" min="1" max="10">
-      <div class="field__hint">Бот и сам может позвать человека, когда не хватает данных или прав.</div>
+      <div class="field__hint">{{t $.L `Бот и сам может позвать человека, когда не хватает данных или прав.`}}</div>
     </div>
     <div class="field">
       <label style="display:flex;gap:8px;align-items:center">
         <input type="checkbox" name="enabled" style="width:auto" {{if .Bot.Enabled}}checked{{end}}>
-        Бот включён
+        {{t $.L `Бот включён`}}
       </label>
-      <div class="field__hint">Выключенный бот не отвечает и не показывается на сайте.</div>
+      <div class="field__hint">{{t $.L `Выключенный бот не отвечает и не показывается на сайте.`}}</div>
     </div>
   </div>
 
   <div class="card">
-    <h2 style="margin-top:0">Куда сообщить, когда бот сдался</h2>
+    <h2 style="margin-top:0">{{t $.L `Куда сообщить, когда бот сдался`}}</h2>
     <p class="field__hint" style="margin:0 0 16px;max-width:64ch">
-      Открытая вкладка админки узнаёт об этом сама и сразу. Это на случай, когда её
-      никто не держит открытой: Hark дёрнет один адрес, а Телеграм, почту или что
-      угодно ещё вы подставите сами. Пусто — не звонить.
+      {{t $.L `Открытая вкладка админки узнаёт об этом сама и сразу. Это на случай, когда её никто не держит открытой: Hark дёрнет один адрес, а Телеграм, почту или что угодно ещё вы подставите сами. Пусто — не звонить.`}}
     </p>
 
     {{if .Tested}}
     <div class="notice {{if hasPrefix .Tested "доставлено"}}notice--ok{{else}}notice--bad{{end}}">
-      <b>Проверка</b><div class="io" style="margin-top:8px">{{.Tested}}</div>
+      <b>{{t $.L `Проверка`}}</b><div class="io" style="margin-top:8px">{{.Tested}}</div>
     </div>
     {{end}}
 
     <div class="row">
       <div class="field" style="max-width:140px">
-        <label for="notify_method">Способ</label>
+        <label for="notify_method">{{t $.L `Способ`}}</label>
         <select id="notify_method" name="notify_method">
           <option value="POST" {{if eq .Notify.Method "POST"}}selected{{end}}>POST</option>
           <option value="GET" {{if eq .Notify.Method "GET"}}selected{{end}}>GET</option>
         </select>
       </div>
       <div class="field">
-        <label for="notify_url">Адрес</label>
+        <label for="notify_url">{{t $.L `Адрес`}}</label>
         <input id="notify_url" type="text" name="notify_url" value="{{.Notify.URL}}"
                placeholder="https://api.telegram.org/bot.../sendMessage?chat_id=1&amp;text={text}">
         <div class="field__hint">
-          Только http и https. В адрес и в тело подставляются
+          {{t $.L `Только http и https. В адрес и в тело подставляются`}}
           <span class="mono">{bot} {reason} {id} {url} {page} {waiting} {text}</span>.
-          Готовая строка по-русски — это <span class="mono">{text}</span>: с ней шаблон не нужен вовсе.
+          {{t $.L `Готовая строка целиком — это {text}: с ней шаблон не нужен вовсе.`}}
         </div>
       </div>
     </div>
 
     <details class="tune">
-      <summary>Заголовки и своё тело</summary>
+      <summary>{{t $.L `Заголовки и своё тело`}}</summary>
       <div class="field" style="margin-top:14px">
-        <label for="notify_headers">Заголовки, JSON</label>
+        <label for="notify_headers">{{t $.L `Заголовки, JSON`}}</label>
         <input id="notify_headers" type="text" name="notify_headers" value="{{.Notify.Headers}}"
                placeholder='{"Authorization":"Bearer ..."}'>
-        <div class="field__hint">Переходы по редиректу запрещены: иначе ключ уедет на чужой хост.</div>
+        <div class="field__hint">{{t $.L `Переходы по редиректу запрещены: иначе ключ уедет на чужой хост.`}}</div>
       </div>
       <div class="field">
-        <label for="notify_template">Тело запроса</label>
+        <label for="notify_template">{{t $.L `Тело запроса`}}</label>
         <textarea id="notify_template" name="notify_template" style="min-height:90px"
                   placeholder='{"text":"{text}"}'>{{.Notify.Template}}</textarea>
         <div class="field__hint">
-          Пусто — уйдёт стандартный JSON с ботом, причиной, ссылкой и длиной очереди.
-          Переписки в нём нет никогда.
+          {{t $.L `Пусто — уйдёт стандартный JSON с ботом, причиной, ссылкой и длиной очереди. Переписки в нём нет никогда.`}}
         </div>
       </div>
     </details>
@@ -94,26 +107,25 @@
     <div class="field">
       <label style="display:flex;gap:8px;align-items:center">
         <input type="checkbox" name="notify_quiet" style="width:auto" {{if .Notify.Quiet}}checked{{end}}>
-        Без причины
+        {{t $.L `Без причины`}}
       </label>
       <div class="field__hint">
-        Причину пишет модель, и она может пересказать слова посетителя. С этой галочкой
-        наружу уходят только счётчик и ссылка.
+        {{t $.L `Причину пишет модель, и она может пересказать слова посетителя. С этой галочкой наружу уходят только счётчик и ссылка.`}}
       </div>
     </div>
 
     {{if .Bot.NotifyLastStatus}}
     <div class="field" style="margin-bottom:0">
-      <label>Последний зов</label>
+      <label>{{t $.L `Последний зов`}}</label>
       <div class="io">{{if .Bot.NotifyLastAt.Valid}}{{when .Bot.NotifyLastAt.String}} · {{end}}{{.Bot.NotifyLastStatus}}</div>
     </div>
     {{end}}
   </div>
 
   <div class="formbar">
-    <button class="btn" type="submit">Сохранить</button>
+    <button class="btn" type="submit">{{t $.L `Сохранить`}}</button>
     <button class="btn btn--ghost" type="submit" formaction="/bots/{{.Bot.ID}}/answers/test">
-      Сохранить и позвонить сейчас
+      {{t $.L `Сохранить и позвонить сейчас`}}
     </button>
   </div>
 </form>

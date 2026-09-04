@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/dripips/hark/internal/lang"
 	"github.com/dripips/hark/internal/store"
 	"github.com/go-chi/chi/v5"
 )
@@ -32,7 +33,7 @@ func (s *Server) managers(w http.ResponseWriter, r *http.Request) {
 	me := currentManager(r)
 
 	s.render(w, r, "managers.html", map[string]any{
-		"Title": "Менеджеры", "Managers": list, "Me": me,
+		"Title": lang.T(language(r), "Менеджеры"), "Managers": list, "Me": me,
 		"Alone": len(list) < 2,
 		"Error": r.URL.Query().Get("error"),
 		"Done":  r.URL.Query().Get("done"),
@@ -44,33 +45,33 @@ func (s *Server) managerCreate(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimSpace(r.FormValue("name"))
 	password := r.FormValue("password")
 
-	if problem := checkNewManager(email, password); problem != "" {
+	if problem := checkNewManager(language(r), email, password); problem != "" {
 		s.managersBack(w, r, "error", problem)
 		return
 	}
 
 	hash, err := HashPassword(password)
 	if err != nil {
-		s.managersBack(w, r, "error", "не удалось сохранить пароль")
+		s.managersBack(w, r, "error", lang.T(language(r), "Не удалось сохранить пароль"))
 		return
 	}
 	if _, err := s.DB.CreateManager(r.Context(), email, name, hash); err != nil {
 		if errors.Is(err, store.ErrManagerExists) {
-			s.managersBack(w, r, "error", "Менеджер "+email+" уже заведён")
+			s.managersBack(w, r, "error", lang.T(language(r), "Менеджер %s уже заведён", email))
 			return
 		}
 		s.managersBack(w, r, "error", err.Error())
 		return
 	}
-	s.managersBack(w, r, "done", "Менеджер "+email+" заведён")
+	s.managersBack(w, r, "done", lang.T(language(r), "Менеджер %s заведён", email))
 }
 
-func checkNewManager(email, password string) string {
+func checkNewManager(code, email, password string) string {
 	if email == "" || !strings.Contains(email, "@") {
-		return "Нужна почта: по ней человек входит"
+		return lang.T(code, "Нужна почта: по ней человек входит")
 	}
 	if len([]rune(password)) < minPasswordLen {
-		return "Пароль короче " + strconv.Itoa(minPasswordLen) + " знаков"
+		return lang.T(code, "Пароль короче %d знаков", minPasswordLen)
 	}
 	return ""
 }
@@ -81,7 +82,7 @@ func (s *Server) managerRename(w http.ResponseWriter, r *http.Request) {
 		s.managersBack(w, r, "error", err.Error())
 		return
 	}
-	s.managersBack(w, r, "done", "Имя изменено")
+	s.managersBack(w, r, "done", lang.T(language(r), "Имя изменено"))
 }
 
 // managerPassword меняет пароль себе или коллеге.
@@ -96,19 +97,19 @@ func (s *Server) managerPassword(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	if len([]rune(password)) < minPasswordLen {
-		s.managersBack(w, r, "error", "Пароль короче "+strconv.Itoa(minPasswordLen)+" знаков")
+		s.managersBack(w, r, "error", lang.T(language(r), "Пароль короче %d знаков", minPasswordLen))
 		return
 	}
 
 	itsMe := me != nil && me.ID == id
 	if itsMe && !s.passwordMatches(r, id, r.FormValue("current")) {
-		s.managersBack(w, r, "error", "Нынешний пароль не подошёл")
+		s.managersBack(w, r, "error", lang.T(language(r), "Нынешний пароль не подошёл"))
 		return
 	}
 
 	hash, err := HashPassword(password)
 	if err != nil {
-		s.managersBack(w, r, "error", "не удалось сохранить пароль")
+		s.managersBack(w, r, "error", lang.T(language(r), "Не удалось сохранить пароль"))
 		return
 	}
 
@@ -124,10 +125,10 @@ func (s *Server) managerPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if itsMe {
-		s.managersBack(w, r, "done", "Пароль изменён, прочие ваши входы погашены")
+		s.managersBack(w, r, "done", lang.T(language(r), "Пароль изменён, прочие ваши входы погашены"))
 		return
 	}
-	s.managersBack(w, r, "done", "Пароль изменён, все его входы погашены")
+	s.managersBack(w, r, "done", lang.T(language(r), "Пароль изменён, все его входы погашены"))
 }
 
 func (s *Server) passwordMatches(r *http.Request, id int64, password string) bool {
@@ -145,7 +146,7 @@ func (s *Server) managerDelete(w http.ResponseWriter, r *http.Request) {
 	// которого человек оказывается на странице входа с паролем, который он
 	// только что стёр. Убрать вас может любой другой менеджер.
 	if me := currentManager(r); me != nil && me.ID == id {
-		s.managersBack(w, r, "error", "Себя убрать нельзя: попросите коллегу")
+		s.managersBack(w, r, "error", lang.T(language(r), "Себя убрать нельзя: попросите коллегу"))
 		return
 	}
 
@@ -157,7 +158,29 @@ func (s *Server) managerDelete(w http.ResponseWriter, r *http.Request) {
 		s.managersBack(w, r, "error", err.Error())
 		return
 	}
-	s.managersBack(w, r, "done", "Менеджер убран, его входы погашены")
+	s.managersBack(w, r, "done", lang.T(language(r), "Менеджер убран, его входы погашены"))
+}
+
+// managerLang запоминает выбранный язык админки.
+//
+// У менеджера, а не у сервера: в одной команде бывает и русский, и
+// англоговорящий, и общая настройка заставила бы одного из них терпеть.
+func (s *Server) managerLang(w http.ResponseWriter, r *http.Request) {
+	me := currentManager(r)
+	if me == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	code := r.FormValue("lang")
+	if code != "" && !lang.Known(code) {
+		s.managersBack(w, r, "error", lang.T(language(r), "Такого языка нет"))
+		return
+	}
+	if err := s.DB.SetManagerLang(r.Context(), me.ID, code); err != nil {
+		s.managersBack(w, r, "error", err.Error())
+		return
+	}
+	s.managersBack(w, r, "done", lang.T(lang.Pick(code), "Язык интерфейса изменён"))
 }
 
 func (s *Server) managersBack(w http.ResponseWriter, r *http.Request, kind, message string) {

@@ -5,6 +5,7 @@ hark-demo-shop.db-*
 *.env
 out/
 bin/
+node_modules/
 tmp/
 hark
 hark.exe

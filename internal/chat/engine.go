@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dripips/hark/internal/lang"
 	"github.com/dripips/hark/internal/llm"
 	"github.com/dripips/hark/internal/store"
 	"github.com/dripips/hark/internal/tools"
@@ -73,12 +74,16 @@ func (e *Engine) Answer(ctx context.Context, bot *store.Bot, conv *store.Convers
 	runners := map[string]tools.Runner{}
 	specs := []llm.Tool{{
 		Name: escalateTool,
-		Description: "Позвать живого менеджера, когда не хватает данных или прав. " +
-			"Причину напиши коротко и по делу.",
+		Description: lang.T(bot.LangOr(),
+			"Позвать живого менеджера, когда не хватает данных или прав. "+
+				"Причину напиши коротко и по делу."),
 		Parameters: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"reason": map[string]any{"type": "string", "description": "почему нужен человек"},
+				"reason": map[string]any{
+					"type":        "string",
+					"description": lang.T(bot.LangOr(), "почему нужен человек"),
+				},
 			},
 			"required": []string{"reason"},
 		},
@@ -181,7 +186,8 @@ func (e *Engine) Answer(ctx context.Context, bot *store.Bot, conv *store.Convers
 				})
 				history = append(history, llm.Message{
 					Role: llm.RoleTool, ToolCallID: call.ID,
-					Text: "Менеджер вызван. Скажи посетителю, что человек подключится, и не обещай сроков.",
+					Text: lang.T(bot.LangOr(),
+						"Менеджер вызван. Скажи посетителю, что человек подключится, и не обещай сроков."),
 				})
 				continue
 			}
@@ -220,7 +226,7 @@ func (e *Engine) Answer(ctx context.Context, bot *store.Bot, conv *store.Convers
 	}
 
 	if answer == "" && !escalated {
-		answer = "Не получилось ответить. Передаю разговор менеджеру."
+		answer = lang.T(bot.LangOr(), "Не получилось ответить. Передаю разговор менеджеру.")
 		escalated = true
 		if reason == "" {
 			reason = receipt.Error
@@ -230,7 +236,7 @@ func (e *Engine) Answer(ctx context.Context, bot *store.Bot, conv *store.Convers
 		}
 	}
 	if escalated && answer == "" {
-		answer = "Подключаю менеджера, он ответит здесь же."
+		answer = lang.T(bot.LangOr(), "Подключаю менеджера, он ответит здесь же.")
 	}
 
 	receipt.PromptTokens = usage.PromptTokens
@@ -352,11 +358,17 @@ func (e *Engine) buildHistory(ctx context.Context, bot *store.Bot,
 func systemPrompt(bot *store.Bot) string {
 	var b strings.Builder
 	b.WriteString(strings.TrimSpace(bot.Instructions))
-	b.WriteString("\n\nПравила:\n")
-	b.WriteString("— Отвечай коротко и по делу.\n")
-	b.WriteString("— Данные бери только из инструментов. Не выдумывай номера, сроки и цены.\n")
-	b.WriteString("— Если данных не хватает или нужно решение человека, вызови " +
-		escalateTool + " вместо догадки.\n")
+	// Правила пишутся на языке бота. Иначе модель отвечает на языке правил, а
+	// не посетителя: русское «Отвечай коротко» тянет русский ответ даже там,
+	// где весь сайт английский.
+	code := bot.LangOr()
+	b.WriteString("\n\n" + lang.T(code, "Правила:") + "\n")
+	b.WriteString("— " + lang.T(code, "Отвечай коротко и по делу.") + "\n")
+	b.WriteString("— " + lang.T(code,
+		"Данные бери только из инструментов. Не выдумывай номера, сроки и цены.") + "\n")
+	b.WriteString("— " + lang.T(code,
+		"Если данных не хватает или нужно решение человека, вызови %s вместо догадки.",
+		escalateTool) + "\n")
 	return b.String()
 }
 

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dripips/hark/internal/lang"
 	"github.com/dripips/hark/internal/notify"
 	"github.com/dripips/hark/internal/store"
 	"github.com/dripips/hark/internal/tools"
@@ -27,6 +29,16 @@ var botTabs = []struct{ Slug, Title string }{
 	{"answers", "Как отвечает"},
 	{"model", "Модель"},
 	{"widget", "Внешность"},
+}
+
+// tabs переводит названия вкладок. Список объявлен один раз и на русском,
+// потому что он же служит ключами перевода.
+func tabs(code string) []struct{ Slug, Title string } {
+	out := make([]struct{ Slug, Title string }, len(botTabs))
+	for i, tab := range botTabs {
+		out[i] = struct{ Slug, Title string }{tab.Slug, lang.T(code, tab.Title)}
+	}
+	return out
 }
 
 func (s *Server) botFromURL(w http.ResponseWriter, r *http.Request) *store.Bot {
@@ -48,7 +60,7 @@ func (s *Server) botPage(w http.ResponseWriter, r *http.Request, bot *store.Bot,
 	tab, template string, extra map[string]any) {
 
 	data := map[string]any{
-		"Title": bot.Name, "Bot": bot, "Tab": tab, "Tabs": botTabs,
+		"Title": bot.Name, "Bot": bot, "Tab": tab, "Tabs": tabs(language(r)),
 	}
 	for key, value := range extra {
 		data[key] = value
@@ -311,8 +323,10 @@ func (s *Server) botAnswers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.botPage(w, r, bot, "answers", "bot-answers.html", map[string]any{
-		"Notify": notify.ParseTarget(bot.Notify),
-		"Tested": r.URL.Query().Get("tested"),
+		"Notify":    notify.ParseTarget(bot.Notify),
+		"BotLang":   bot.LangOr(),
+		"LangTitle": lang.Title,
+		"Tested":    r.URL.Query().Get("tested"),
 	})
 }
 
@@ -429,6 +443,7 @@ func (s *Server) botAnswersSave(w http.ResponseWriter, r *http.Request) {
 	bot.EscalateAfter = atoiDefault(r.FormValue("escalate_after"), 2)
 	bot.Enabled = r.FormValue("enabled") == "on"
 	bot.Notify = mustJSON(targetFromForm(r))
+	bot.Lang = lang.Pick(r.FormValue("lang"))
 	s.saveAndBack(w, r, bot, "answers")
 }
 
@@ -514,14 +529,23 @@ func (s *Server) botWidgetPreview(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Собираем в память, а не сразу в ответ: шаблон, упавший на середине,
+	// уже не даст отдать ошибку — заголовок к тому времени отправлен.
+	var page bytes.Buffer
+	if err := s.templates.ExecuteTemplate(&page, "preview", map[string]any{
+		"Slug": bot.Slug, "Query": query.Encode(),
+		// Язык здесь приходится добавлять руками: обычную сборку данных
+		// эта страница обходит, потому что рисуется без общей обвязки.
+		"L": language(r),
+	}); err != nil {
+		http.Error(w, "ошибка шаблона: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	// Рамку показываем только внутри админки: снаружи её открывать незачем.
 	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
-	if err := s.templates.ExecuteTemplate(w, "preview", map[string]any{
-		"Slug": bot.Slug, "Query": query.Encode(),
-	}); err != nil {
-		http.Error(w, "ошибка шаблона: "+err.Error(), http.StatusInternalServerError)
-	}
+	_, _ = w.Write(page.Bytes())
 }
 
 func (s *Server) saveAndBack(w http.ResponseWriter, r *http.Request, bot *store.Bot, tab string) {
@@ -549,6 +573,6 @@ func (s *Server) connectionsAll(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	s.render(w, r, "connections.html", map[string]any{
-		"Title": "Подключения", "Rows": rows, "Bots": bots,
+		"Title": lang.T(language(r), "Подключения"), "Rows": rows, "Bots": bots,
 	})
 }

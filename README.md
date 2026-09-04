@@ -139,6 +139,21 @@ Theme values land directly in the widget's CSS, so they are cleaned in one place
 
 The frame on the right runs the widget itself rather than a mock-up. It loads the same file and the same settings endpoint the site gets, so it has no way to drift from the live thing.
 
+## Languages
+
+The admin and the widget speak Russian and English. Each manager picks their own interface language: a team can hold both a Russian speaker and an English one, and a single shared setting would make one of them suffer.
+
+The bot's language is set separately, on the "How it answers" tab. It drives the widget labels and the rules the model reads: Russian rules pull a Russian answer even on an English site, and no amount of instructions fixes that.
+
+Adding a language means translating one file:
+
+```bash
+go run ./cmd/locale            # what exists and what is missing
+go run ./cmd/locale fr > internal/lang/locales/fr.json
+```
+
+The translation key is the Russian source string itself, the way gettext does it. So a template shows what it will print without a trip to a dictionary, and an untranslated string stays Russian instead of turning into `nav.bots`. There is one cost: editing the Russian wording breaks the link to the translation. `go test ./internal/lang` catches it, comparing the dictionaries against the code and reporting both gaps and orphans.
+
 ## Install
 
 ```bash
