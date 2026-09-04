@@ -117,7 +117,7 @@ Ein Tag auf der Seite:
 <script src="https://hark.example.com/widget/hark.js" data-bot="shop" defer></script>
 ```
 
-10 KB, ohne Abhängigkeiten, das Markup in einem Shadow Root — CSS läuft in keine Richtung aus. Die Antwort kommt als Strom über SSE, Antworten der Betreuung werden per Abfrage nachgeholt.
+23 KB, über die Leitung sieben: Hark liefert ihn gzip-komprimiert. Ohne Abhängigkeiten, das Markup in einem Shadow Root — CSS läuft in keine Richtung aus. Die Antwort kommt als Strom über SSE, Antworten der Betreuung werden per Abfrage nachgeholt.
 
 Jeder Teil des Widgets ist optional. Füllt man nichts aus, bleibt ein nackter Verlauf mit Eingabefeld; füllt man alles aus, bekommt man einen runden Starter, einen Begrüßungsschirm mit vorbereiteten Fragen und eine Fußnote mit Link zur Datenschutzseite.
 

@@ -117,7 +117,7 @@ One tag on your page:
 <script src="https://hark.example.com/widget/hark.js" data-bot="shop" defer></script>
 ```
 
-10 KB, no dependencies, markup inside a shadow root so neither side's CSS leaks. Streams the answer over SSE and picks up manager replies by polling.
+23 KB, and seven over the wire — Hark serves it gzipped. No dependencies, markup inside a shadow root so neither side's CSS leaks. Streams the answer over SSE and picks up manager replies by polling.
 
 Every part of the widget is optional. Fill in nothing and you get a bare feed with an input; fill in everything and you get a round launcher, a welcome screen with ready-made questions, and a footnote linking to your privacy page.
 

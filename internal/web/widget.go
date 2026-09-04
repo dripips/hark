@@ -1,11 +1,14 @@
 package web
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dripips/hark/internal/notify"
@@ -55,15 +58,59 @@ func botSlug(r *http.Request) string {
 	return r.URL.Query().Get("slug")
 }
 
+// widgetOnce готовит виджет один раз при первом запросе: файл зашит в
+// бинарник и не меняется, поэтому сжимать его на каждый запрос незачем.
+var (
+	widgetOnce   sync.Once
+	widgetPlain  []byte
+	widgetPacked []byte
+)
+
+func widgetBody() ([]byte, []byte) {
+	widgetOnce.Do(func() {
+		widgetPlain, _ = assets.ReadFile("widget/hark.js")
+
+		var buf bytes.Buffer
+		writer, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+		if err != nil {
+			return
+		}
+		if _, err := writer.Write(widgetPlain); err != nil {
+			return
+		}
+		if err := writer.Close(); err != nil {
+			return
+		}
+		widgetPacked = buf.Bytes()
+	})
+	return widgetPlain, widgetPacked
+}
+
+// widgetScript отдаёт виджет, по возможности сжатым.
+//
+// Это единственный файл Hark, который грузится на каждой странице чужого
+// сайта, и владелец за него не отвечает: сервер перед Hark может стоять, а
+// может и не стоять. Двадцать три килобайта против семи — разница, которую
+// видно на медленной связи, а не в отчёте.
 func (s *Server) widgetScript(w http.ResponseWriter, r *http.Request) {
-	data, err := assets.ReadFile("widget/hark.js")
-	if err != nil {
+	plain, packed := widgetBody()
+	if plain == nil {
 		http.Error(w, "виджет не найден", http.StatusNotFound)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=300")
-	_, _ = w.Write(data)
+	// Vary обязателен: без него общий кеш отдаст сжатый ответ тому, кто
+	// сжатия не просил, и виджет на его странице просто не запустится.
+	w.Header().Set("Vary", "Accept-Encoding")
+
+	if packed != nil && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		w.Header().Set("Content-Encoding", "gzip")
+		_, _ = w.Write(packed)
+		return
+	}
+	_, _ = w.Write(plain)
 }
 
 func (s *Server) widgetConfig(w http.ResponseWriter, r *http.Request) {
