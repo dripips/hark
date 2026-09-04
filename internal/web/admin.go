@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -31,7 +32,12 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) botList(w http.ResponseWriter, r *http.Request) {
 	bots, _ := s.DB.Bots(r.Context())
-	s.render(w, r, "bots.html", map[string]any{"Title": "Боты", "Bots": bots})
+	// Сколько у бота подключений — то же, что «врёт он или знает». Считаем
+	// одним запросом на всю страницу, а не по обращению на карточку.
+	counts, _ := s.DB.ToolCounts(r.Context())
+	s.render(w, r, "bots.html", map[string]any{
+		"Title": "Боты", "Bots": bots, "ToolCounts": counts,
+	})
 }
 
 // botCreate заводит бота с рабочими значениями по умолчанию.
@@ -139,8 +145,11 @@ func (s *Server) inbox(w http.ResponseWriter, r *http.Request) {
 		names[bot.ID] = bot.Name
 	}
 
+	claims, _ := s.DB.ClaimNames(r.Context())
+
 	s.render(w, r, "inbox.html", map[string]any{
 		"Title": "Разговоры", "Conversations": rows, "BotNames": names, "State": state,
+		"Claims": claims,
 	})
 }
 
@@ -173,8 +182,15 @@ func (s *Server) conversation(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	claimedBy, claimed := s.DB.ClaimedBy(r.Context(), conv.ID)
+	me := currentManager(r)
+	mine := claimed && me != nil && conv.ClaimedBy.Valid && conv.ClaimedBy.Int64 == me.ID
+
 	s.render(w, r, "conversation.html", map[string]any{
 		"Title": "Разговор", "Conversation": conv, "Bot": bot, "Lines": lines,
+		"ClaimedBy": claimedBy, "Claimed": claimed, "Mine": mine,
+		// Проигравший гонку приходит сюда с именем победителя в адресе.
+		"Taken":     r.URL.Query().Get("taken"),
 		"TotalCost": totalCost, "TotalReasoning": totalReasoning,
 		"TotalCompletion": totalCompletion,
 		"ReasoningShare":  share(totalReasoning, totalCompletion),
@@ -196,6 +212,11 @@ func (s *Server) conversationReply(w http.ResponseWriter, r *http.Request) {
 	}
 	// Ответил человек — разговор остаётся за человеком, пока его не вернут боту.
 	_ = s.DB.SetConversationState(r.Context(), id, "human", "")
+	// И заодно записывается на ответившего, если был свободен. Чужой разговор
+	// не перехватываем: Claim молча откажет, и в списке останется прежнее имя.
+	if me := currentManager(r); me != nil {
+		_ = s.DB.Claim(r.Context(), id, me.ID)
+	}
 	// Разговор ушёл из очереди: у коллег цифра падает, и видно, что его взяли.
 	s.notifyQueue(r)
 	http.Redirect(w, r, "/conversations/"+chi.URLParam(r, "id"), http.StatusSeeOther)
@@ -207,6 +228,10 @@ func (s *Server) conversationState(w http.ResponseWriter, r *http.Request) {
 	switch state {
 	case "open", "waiting", "human", "closed":
 		_ = s.DB.SetConversationState(r.Context(), id, state, r.FormValue("reason"))
+		// Вернули боту или закрыли — отметка «взял» больше ни о чём не говорит.
+		if state == "open" || state == "closed" {
+			_ = s.DB.Release(r.Context(), id)
+		}
 		s.notifyQueue(r)
 	}
 	http.Redirect(w, r, "/conversations/"+chi.URLParam(r, "id"), http.StatusSeeOther)
@@ -328,3 +353,34 @@ func atoiDefault(s string, fallback int) int {
 }
 
 var _ = chat.Cost
+
+// conversationClaim отмечает разговор за тем, кто нажал.
+//
+// Кнопка нужна отдельно от ответа: увидеть занятость надо ДО того, как
+// второй менеджер начнёт печатать, а не после того, как посетитель получит
+// два ответа от разных людей.
+func (s *Server) conversationClaim(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	me := currentManager(r)
+	if me == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if err := s.DB.Claim(r.Context(), id, me.ID); err != nil {
+		// Проиграл гонку: показываем чужое имя, а не молча перехватываем.
+		name, _ := s.DB.ClaimedBy(r.Context(), id)
+		http.Redirect(w, r, fmt.Sprintf("/conversations/%d?taken=%s", id,
+			url.QueryEscape(name)), http.StatusSeeOther)
+		return
+	}
+	s.notifyQueue(r)
+	http.Redirect(w, r, fmt.Sprintf("/conversations/%d", id), http.StatusSeeOther)
+}
+
+func (s *Server) conversationRelease(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	_ = s.DB.Release(r.Context(), id)
+	s.notifyQueue(r)
+	http.Redirect(w, r, fmt.Sprintf("/conversations/%d", id), http.StatusSeeOther)
+}

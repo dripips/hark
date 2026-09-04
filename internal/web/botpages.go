@@ -413,12 +413,7 @@ func widgetSnippet(r *http.Request, slug string) string {
 		scheme, r.Host, slug)
 }
 
-func truncateText(s string, limit int) string {
-	if len(s) <= limit {
-		return s
-	}
-	return s[:limit] + "…"
-}
+func truncateText(s string, limit int) string { return store.Clip(s, limit) }
 
 // Каждая вкладка сохраняет только свои поля. Одна общая форма стирала бы
 // чужие значения, потому что их нет в отправленных данных.

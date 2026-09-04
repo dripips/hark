@@ -271,11 +271,14 @@ func writeJSON(w http.ResponseWriter, payload any) {
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
+// trim режет по символам: у посетителя в имени и в адресе страницы бывает
+// что угодно, а байтовая обрезка оставила бы половину буквы.
 func trim(s string, limit int) string {
-	if len(s) <= limit {
+	runes := []rune(s)
+	if len(runes) <= limit {
 		return s
 	}
-	return s[:limit]
+	return string(runes[:limit])
 }
 
 // designPayload превращает тему в готовые значения CSS. Считает сервер, а не

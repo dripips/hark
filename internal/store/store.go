@@ -146,6 +146,8 @@ type Conversation struct {
 	EscalatedAt    sql.NullString
 	EscalateReason string
 	Failures       int
+	ClaimedBy      sql.NullInt64
+	ClaimedAt      sql.NullString
 	CreatedAt      string
 	UpdatedAt      string
 }
@@ -337,12 +339,13 @@ func (db *DB) DeleteTool(ctx context.Context, botID, id int64) error {
 // ── Разговоры ───────────────────────────────────────────────────────────
 
 const convColumns = `id, bot_id, token, visitor, page_url, state, escalated_at,
-	escalate_reason, failures, created_at, updated_at`
+	escalate_reason, failures, claimed_by, claimed_at, created_at, updated_at`
 
 func scanConversation(row interface{ Scan(...any) error }) (*Conversation, error) {
 	var c Conversation
 	err := row.Scan(&c.ID, &c.BotID, &c.Token, &c.Visitor, &c.PageURL, &c.State,
-		&c.EscalatedAt, &c.EscalateReason, &c.Failures, &c.CreatedAt, &c.UpdatedAt)
+		&c.EscalatedAt, &c.EscalateReason, &c.Failures, &c.ClaimedBy, &c.ClaimedAt,
+		&c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}

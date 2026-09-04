@@ -21,6 +21,17 @@
       {{if not .Enabled}}<span class="pill pill--off">выключен</span>{{end}}
     </div>
     <p class="muted mono" style="margin:0 0 12px">{{.Provider}} · {{.Model}}</p>
+    {{/* Сколько подключений — то же, что «знает или догадывается». Без них бот
+         отвечает только тем, что написано в инструкциях, и это стоит видеть,
+         не заходя внутрь. */}}
+    {{$counts := index $.ToolCounts .ID}}
+    <p class="botcard__conn">
+      {{if $counts}}
+        {{index $counts 0}} {{plural (index $counts 0) "подключение" "подключения" "подключений"}}{{if lt (index $counts 1) (index $counts 0)}}, включено {{index $counts 1}}{{end}}
+      {{else}}
+        без подключений — отвечает только по инструкциям
+      {{end}}
+    </p>
     <p style="color:var(--t2);margin:0 0 16px">{{trimTo 140 .Instructions}}</p>
     <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/connections">Подключения</a>
     <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/answers">Как отвечает</a>

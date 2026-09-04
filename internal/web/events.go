@@ -37,6 +37,8 @@ type queueLine struct {
 	Bot     string `json:"bot"`
 	Reason  string `json:"reason"`
 	Waiting string `json:"waiting"`
+	// Claimed — имя взявшего. Пусто, если разговор свободен.
+	Claimed string `json:"claimed,omitempty"`
 }
 
 type subscriber struct {
@@ -132,6 +134,7 @@ func (s *Server) snapshot(r *http.Request) queueSnapshot {
 
 	rows, _ := s.DB.Conversations(ctx, 0, "waiting", 5)
 	bots, _ := s.DB.Bots(ctx)
+	claims, _ := s.DB.ClaimNames(ctx)
 	names := map[int64]string{}
 	for _, bot := range bots {
 		names[bot.ID] = bot.Name
@@ -143,6 +146,7 @@ func (s *Server) snapshot(r *http.Request) queueSnapshot {
 			ID: conv.ID, Bot: names[conv.BotID],
 			Reason:  conv.EscalateReason,
 			Waiting: waitedFor(conv),
+			Claimed: claims[conv.ID],
 		})
 	}
 	return out

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/dripips/hark/internal/store"
 )
 
 func (s *Server) parseTemplates() error {
@@ -89,14 +91,9 @@ func (s *Server) parseTemplates() error {
 				return many
 			}
 		},
-		"trimTo": func(limit int, s string) string {
-			if len(s) <= limit {
-				return s
-			}
-			return s[:limit] + "…"
-		},
-		"lines": func(s string) []string { return strings.Split(s, "\n") },
-		"sub":   func(a, b int) int { return a - b },
+		"trimTo": func(limit int, s string) string { return store.Clip(s, limit) },
+		"lines":  func(s string) []string { return strings.Split(s, "\n") },
+		"sub":    func(a, b int) int { return a - b },
 		// Исход зова наружу начинается со слова «доставлено», когда он удался:
 		// по нему страница выбирает, красить плашку зелёным или красным.
 		"hasPrefix": strings.HasPrefix,

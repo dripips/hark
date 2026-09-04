@@ -83,6 +83,12 @@ Hält niemand die Verwaltung offen, ruft Hark eine einzige Adresse auf, die Sie 
 
 Nach außen geht die Tatsache, nicht das Gespräch: Bot, Grund, Länge der Schlange und ein Link in die Verwaltung. Den Grund schreibt das Modell, und er kann die Worte des Besuchers wiedergeben — das Häkchen „ohne Grund“ lässt nur Zähler und Link übrig.
 
+Ein wartendes Gespräch hat jemanden, der es übernommen hat. Die Schaltfläche „Ich nehme es“ schreibt es auf Sie, und die Kollegen sehen den Namen direkt in der Liste — bevor sie zu tippen anfangen und nicht erst, nachdem der Besucher zwei Antworten von zwei Leuten bekommen hat. Das Übernehmen ist atomar: Zwei gleichzeitige Klicks ergeben genau einen Gewinner, der andere sieht, wer schneller war.
+
+![Wer das Gespräch übernommen hat](screenshots/20-claim.png)
+
+Freigeben darf jeder, nicht nur der Übernehmende: Menschen gehen essen, und einen Besucher hinter jemandem einzusperren, der weg ist, wäre das Schlechteste überhaupt. Die Antwort eines Betreuers übernimmt das Gespräch von selbst, falls es frei war; Rückgabe an den Bot und Schließen löschen die Markierung.
+
 Ob eine Eskalation festgehalten wird, hängt nicht mehr davon ab, ob die Anfrage des Besuchers noch lebt. Ein mitten im Satz geschlossener Reiter führte früher zum denkbar schlechtesten Ausgang: Der Besucher bekam „Ich übergebe an einen Menschen“, das Gespräch blieb außerhalb der Schlange, und den versprochenen Menschen rief niemand.
 
 ## Betreuer

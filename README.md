@@ -83,6 +83,12 @@ If nobody is keeping the admin open, Hark calls one address that you filled in y
 
 What leaves the machine is the fact, not the conversation: the bot, the reason, the queue depth and a link into the admin. The reason is written by the model and may paraphrase the visitor, so a "no reason" box leaves only the count and the link.
 
+A waiting conversation has an owner. The "I'll take it" button marks it as yours, and colleagues see the name in the list itself — before they start typing, rather than after the visitor has received two answers from two people. Taking it is atomic: two simultaneous clicks produce exactly one winner, and the other person sees who got there first.
+
+![Who took the conversation](screenshots/20-claim.png)
+
+Anyone can release it, not just whoever took it: people go to lunch, and locking a visitor behind someone who left is the worst thing available. A manager's reply takes the conversation automatically if it was free; handing it back to the bot or closing it clears the mark.
+
 Recording an escalation no longer depends on the visitor's request still being alive. A tab closed mid-sentence used to produce the worst outcome available: the visitor got "I'm handing you to a person" while the conversation stayed out of the queue, and the person nobody called never came.
 
 ## Managers

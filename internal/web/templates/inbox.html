@@ -11,7 +11,7 @@
 
 <div class="card" style="padding:0">
   <table>
-    <thead><tr><th>Состояние</th><th>Причина или страница</th><th>Начат</th><th>Обновлён</th></tr></thead>
+    <thead><tr><th>Состояние</th><th>Причина или страница</th><th>Кто взял</th><th>Начат</th><th>Обновлён</th></tr></thead>
     <tbody>
     {{range .Conversations}}
       <tr>
@@ -23,11 +23,16 @@
             {{if .EscalateReason}}{{trimTo 70 .EscalateReason}}{{else}}{{trimTo 60 .PageURL}}{{end}}
           </a>
         </td>
+        {{/* Имя видно прямо в списке: открывать разговор, чтобы узнать, что им
+             уже занимаются, — значит узнать это слишком поздно. */}}
+        <td style="width:150px">
+          {{with index $.Claims .ID}}<span class="pill pill--human">{{.}}</span>{{end}}
+        </td>
         <td class="muted mono" style="width:150px">{{when .CreatedAt}}</td>
         <td class="muted mono" style="width:150px">{{when .UpdatedAt}}</td>
       </tr>
     {{else}}
-      <tr><td colspan="4" class="empty">Ничего не найдено.</td></tr>
+      <tr><td colspan="5" class="empty">Ничего не найдено.</td></tr>
     {{end}}
     </tbody>
   </table>

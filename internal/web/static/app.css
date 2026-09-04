@@ -538,3 +538,30 @@ tr:last-child td { border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   .queue { animation: none; }
 }
+
+/* ── Кто взял разговор ───────────────────────────────────────────────── */
+
+/* Полоса над лентой, а не пометка сбоку: занятость надо увидеть раньше, чем
+   начнёшь печатать, иначе посетитель получит два ответа от разных людей. */
+.claim {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  margin-bottom: 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--card);
+}
+.claim--mine { border-color: var(--accent-line); background: var(--accent-soft); }
+.claim--other { border-color: var(--warm); background: var(--warm-soft); }
+
+.claim__when { display: block; color: var(--t2); font-size: 13px; margin-top: 3px; }
+.claim__actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+
+.botcard__conn { color: var(--t3); font-size: 13px; margin: 0 0 14px; }
+
+@media (max-width: 640px) {
+  .claim__actions { margin-left: 0; }
+}

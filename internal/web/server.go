@@ -117,6 +117,8 @@ func (s *Server) routes() {
 		r.Get("/conversations/{id}", s.conversation)
 		r.Post("/conversations/{id}/reply", s.conversationReply)
 		r.Post("/conversations/{id}/state", s.conversationState)
+		r.Post("/conversations/{id}/claim", s.conversationClaim)
+		r.Post("/conversations/{id}/release", s.conversationRelease)
 		r.Get("/analytics", s.analytics)
 		r.Get("/events", s.events)
 		r.Get("/queue.json", s.queueJSON)

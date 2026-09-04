@@ -16,6 +16,50 @@
   </div>
 </div>
 
+{{/* Занятость видна до того, как второй менеджер начнёт печатать. После — уже
+     поздно: посетитель получит два ответа от разных людей. */}}
+{{if .Taken}}
+<div class="notice notice--bad">
+  <b>Не успели</b>
+  <div style="margin-top:6px;color:var(--t2)">Разговор взял {{.Taken}} за мгновение до вас.</div>
+</div>
+{{end}}
+
+{{if ne .Conversation.State "closed"}}
+<div class="claim {{if .Claimed}}{{if .Mine}}claim--mine{{else}}claim--other{{end}}{{end}}">
+  <div>
+    {{if .Claimed}}
+      {{if .Mine}}
+        <b>Разговор за вами</b>
+        <span class="claim__when">взят {{when .Conversation.ClaimedAt.String}}</span>
+      {{else}}
+        <b>Взял {{.ClaimedBy}}</b>
+        <span class="claim__when">{{when .Conversation.ClaimedAt.String}} · отвечать вторым не стоит</span>
+      {{end}}
+    {{else}}
+      <b>Разговор свободен</b>
+      <span class="claim__when">возьмите его, чтобы коллеги видели, что им занимаются</span>
+    {{end}}
+  </div>
+  <div class="claim__actions">
+    {{if .Claimed}}
+      <form method="post" action="/conversations/{{.Conversation.ID}}/release">
+        <button class="btn btn--ghost btn--small" type="submit">Отпустить</button>
+      </form>
+      {{if not .Mine}}
+      <form method="post" action="/conversations/{{.Conversation.ID}}/claim">
+        <button class="btn btn--ghost btn--small" type="submit">Взять себе</button>
+      </form>
+      {{end}}
+    {{else}}
+      <form method="post" action="/conversations/{{.Conversation.ID}}/claim">
+        <button class="btn btn--small" type="submit">Беру</button>
+      </form>
+    {{end}}
+  </div>
+</div>
+{{end}}
+
 {{if .Conversation.EscalateReason}}
 <div class="card" style="border-color:var(--warm);background:var(--warm-soft);margin-bottom:22px">
   <b>Бот позвал человека.</b> {{.Conversation.EscalateReason}}

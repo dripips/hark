@@ -41,6 +41,11 @@ var columnAdditions = []struct {
 	// сохранением настроек, и наоборот.
 	{"bots", "notify_last_at", "TEXT"},
 	{"bots", "notify_last_status", "TEXT NOT NULL DEFAULT ''"},
+	// Кто взял разговор, ждущий человека. Без внешнего ключа осознанно: ALTER
+	// TABLE его в SQLite не добавляет, а удалённый менеджер оставит висячий
+	// номер — читаем внешним соединением.
+	{"conversations", "claimed_by", "INTEGER"},
+	{"conversations", "claimed_at", "TEXT"},
 }
 
 func migrate(db *sql.DB) error {

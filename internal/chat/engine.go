@@ -373,9 +373,12 @@ var buildProvider = func(bot *store.Bot) (llm.Provider, error) {
 	}
 }
 
+// truncate режет по символам: чек и запрос могут быть на любом языке, а
+// байтовая обрезка на кириллице врёт вдвое и рубит букву пополам.
 func truncate(s string, limit int) string {
-	if len(s) <= limit {
+	runes := []rune(s)
+	if len(runes) <= limit {
 		return s
 	}
-	return s[:limit] + "…"
+	return string(runes[:limit]) + "…"
 }
