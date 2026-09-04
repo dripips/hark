@@ -1,0 +1,62 @@
+{{template "head" .}}
+<h1>Аналитика</h1>
+<p class="lede">Последние {{.Days}} {{plural .Days "день" "дня" "дней"}}</p>
+
+<div class="grid grid--3" style="margin-bottom:26px">
+  <div class="card">
+    <div class="stat__value">{{.Summary.Dialogues}}</div>
+    <div class="stat__label">разговоров</div>
+  </div>
+  <div class="card">
+    <div class="stat__value">{{.Summary.Escalated}}</div>
+    <div class="stat__label">дошло до человека</div>
+  </div>
+  <div class="card">
+    <div class="stat__value">{{money .Summary.Cost}}</div>
+    <div class="stat__label">стоимость</div>
+    {{if .Summary.ReasoningShare}}
+    <div class="stat__note">{{.Summary.ReasoningShare}}% — рассуждение</div>
+    {{end}}
+  </div>
+</div>
+
+<div class="card">
+  <h2>Токены вывода по дням</h2>
+  <p class="field__hint" style="margin:0 0 4px">
+    Тёплая часть столбика — рассуждение: его нет в ответах, но оно в счёте.
+  </p>
+  <div class="bars">
+    {{range .Series}}
+    <div class="bars__col" title="{{.Date}}: вывод {{.Output}}, рассуждение {{.Reasoning}}">
+      <div class="bars__part bars__part--reason" style="height:{{.Reasoning}}px;max-height:96px"></div>
+      <div class="bars__part bars__part--out" style="height:{{sub .Output .Reasoning}}px;max-height:48px"></div>
+    </div>
+    {{end}}
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--accent)"></i>ответ</span>
+    <span><i style="background:var(--warm)"></i>рассуждение</span>
+  </div>
+</div>
+
+<div class="card" style="margin-top:22px;padding:0">
+  <table>
+    <thead><tr><th>День</th><th>Разговоров</th><th>Ответов</th><th>К человеку</th><th>Вывод</th><th>Рассуждение</th><th>Стоимость</th></tr></thead>
+    <tbody>
+    {{range .Series}}
+      <tr>
+        <td class="mono">{{.Date}}</td>
+        <td>{{.Dialogues}}</td>
+        <td>{{.Answers}}</td>
+        <td>{{.Escalated}}</td>
+        <td class="mono">{{.Output}}</td>
+        <td class="mono" style="color:var(--warm)">{{.Reasoning}}</td>
+        <td class="mono">{{money .Cost}}</td>
+      </tr>
+    {{else}}
+      <tr><td colspan="7" class="empty">Данных пока нет.</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+{{template "foot" .}}

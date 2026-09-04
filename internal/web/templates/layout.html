@@ -1,0 +1,52 @@
+{{define "head"}}<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} · Hark</title>
+<link rel="stylesheet" href="/static/app.css">
+<link rel="icon" href="data:,">
+</head>
+<body>
+{{if .Manager}}
+<header class="top">
+  <div class="wrap top__row">
+    <a class="brand" href="/">hark<span>.</span></a>
+    <nav class="nav">
+      <a href="/" {{if eq .Path "/"}}aria-current="page"{{end}}>Обзор</a>
+      <a href="/inbox" {{if eq .Path "/inbox"}}aria-current="page"{{end}}>Разговоры</a>
+      <a href="/bots" {{if eq .Path "/bots"}}aria-current="page"{{end}}>Боты</a>
+      <a href="/analytics" {{if eq .Path "/analytics"}}aria-current="page"{{end}}>Аналитика</a>
+      <form method="post" action="/logout" style="margin-left:8px">
+        <button class="btn btn--ghost btn--small" type="submit">Выйти</button>
+      </form>
+    </nav>
+  </div>
+</header>
+{{end}}
+<main class="wrap">
+{{end}}
+
+{{define "foot"}}
+</main>
+</body>
+</html>
+{{end}}
+
+{{/* Один шаг чека: обращение к модели, вызов инструмента или сбой. */}}
+{{define "step"}}
+<div class="step step--{{.Kind}}">
+  <div class="step__kind">
+    <b>{{stepName .Kind}}</b>
+    {{if .TookMS}}{{ms .TookMS}}{{end}}
+  </div>
+  <div>
+    <div class="step__name">{{.Name}}{{if .Status}} <span class="muted">· {{.Status}}</span>{{end}}</div>
+    {{if .Detail}}<div class="step__detail">{{.Detail}}</div>{{end}}
+    {{if .Request}}<div class="io"><b>ушло</b>
+{{.Request}}</div>{{end}}
+    {{if .Response}}<div class="io"><b>вернулось</b>
+{{.Response}}</div>{{end}}
+  </div>
+</div>
+{{end}}

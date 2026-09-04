@@ -1,0 +1,96 @@
+{{template "head" .}}
+
+<div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:22px">
+  <div>
+    <h1>Разговор {{if .Bot}}· {{.Bot.Name}}{{end}}</h1>
+    <p class="lede" style="margin:0">
+      Начат {{when .Conversation.CreatedAt}}
+      {{if .Conversation.PageURL}} · <span class="mono muted">{{trimTo 60 .Conversation.PageURL}}</span>{{end}}
+    </p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <span class="pill {{if eq .Conversation.State "waiting"}}pill--wait{{else if eq .Conversation.State "human"}}pill--human{{end}}">
+      {{stateName .Conversation.State}}
+    </span>
+    <a class="btn btn--ghost btn--small" href="/inbox">К списку</a>
+  </div>
+</div>
+
+{{if .Conversation.EscalateReason}}
+<div class="card" style="border-color:var(--warm);background:var(--warm-soft);margin-bottom:22px">
+  <b>Бот позвал человека.</b> {{.Conversation.EscalateReason}}
+</div>
+{{end}}
+
+{{/* Итог по деньгам сверху: менеджеру важно понимать цену разговора до того,
+     как он начнёт раскрывать каждый чек. */}}
+{{if .TotalCompletion}}
+<div class="card" style="margin-bottom:22px">
+  <div class="receipt__total" style="padding:0;background:transparent">
+    <span>стоимость разговора <b>{{money .TotalCost}}</b></span>
+    <span>токенов вывода <b>{{.TotalCompletion}}</b></span>
+    <span class="warm">из них рассуждение <b class="warm">{{.TotalReasoning}}</b> · {{.ReasoningShare}}%</span>
+  </div>
+  {{if gt .ReasoningShare 50}}
+  <p class="field__hint" style="margin-top:10px">
+    Больше половины оплаченного вывода ушло на рассуждение, которого нет в ответах.
+    Это нормально для думающих моделей и объясняет счёт.
+  </p>
+  {{end}}
+</div>
+{{end}}
+
+{{range .Lines}}
+<div class="turn turn--{{.Message.Role}}">
+  <div class="turn__head">
+    <b style="color:var(--t2)">{{roleName .Message.Role}}</b>
+    {{if .Message.Author}}<span>{{.Message.Author}}</span>{{end}}
+    <span>{{when .Message.CreatedAt}}</span>
+  </div>
+  <div class="bubble">{{.Message.Text}}</div>
+
+  {{with .Receipt}}
+  <details class="receipt">
+    <summary>
+      чек · {{.Model}} · {{ms .TookMS}}
+      {{if .CostMicro}} · {{money .CostMicro}}{{end}}
+      {{if .ReasoningTokens}} · рассуждение {{.ReasoningTokens}}{{end}}
+    </summary>
+    <div class="receipt__body">
+      {{range .Steps}}{{template "step" .}}{{end}}
+      <div class="receipt__total">
+        <span>поставщик <b>{{.Provider}}</b></span>
+        <span>ввод <b>{{.PromptTokens}}</b></span>
+        <span>вывод <b>{{.CompletionTokens}}</b></span>
+        {{if .ReasoningTokens}}<span class="warm">рассуждение <b class="warm">{{.ReasoningTokens}}</b></span>{{end}}
+        {{if .CachedTokens}}<span>из кеша <b>{{.CachedTokens}}</b></span>{{end}}
+        <span>итого <b>{{money .CostMicro}}</b></span>
+      </div>
+      {{if .Error}}
+      <div class="receipt__total" style="color:var(--danger)">сбой: {{.Error}}</div>
+      {{end}}
+    </div>
+  </details>
+  {{end}}
+</div>
+{{else}}
+<div class="empty">Пока ни одной реплики.</div>
+{{end}}
+
+<div class="card" style="margin-top:28px">
+  <h2>Ответить от себя</h2>
+  <form method="post" action="/conversations/{{.Conversation.ID}}/reply">
+    <div class="field">
+      <textarea name="text" placeholder="Посетитель увидит, что отвечает человек" required></textarea>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" type="submit">Отправить</button>
+    </div>
+  </form>
+  <form method="post" action="/conversations/{{.Conversation.ID}}/state" style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn btn--ghost btn--small" name="state" value="open" type="submit">Вернуть боту</button>
+    <button class="btn btn--ghost btn--small" name="state" value="closed" type="submit">Закрыть</button>
+  </form>
+</div>
+
+{{template "foot" .}}

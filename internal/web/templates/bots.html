@@ -1,0 +1,20 @@
+{{template "head" .}}
+<h1>Боты</h1>
+<p class="lede">Один бот — один сайт или раздел. Модель и поставщик у каждого свои.</p>
+
+<div class="grid grid--2">
+{{range .Bots}}
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <h2 style="margin:0">{{.Name}}</h2>
+      {{if not .Enabled}}<span class="pill pill--off">выключен</span>{{end}}
+    </div>
+    <p class="muted mono" style="margin:0 0 12px">{{.Provider}} · {{.Model}}</p>
+    <p style="color:var(--t2);margin:0 0 16px">{{trimTo 140 .Instructions}}</p>
+    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}">Настроить</a>
+  </div>
+{{else}}
+  <div class="empty">Ботов пока нет.</div>
+{{end}}
+</div>
+{{template "foot" .}}

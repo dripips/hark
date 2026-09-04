@@ -1,0 +1,268 @@
+{{template "head" .}}
+
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px">
+  <div>
+    <h1 style="margin:0">{{.Bot.Name}}</h1>
+    <p class="lede" style="margin:4px 0 0">
+      <span class="mono">{{.Bot.Provider}} · {{.Bot.Model}}</span>
+    </p>
+  </div>
+  <form method="post" action="/bots/{{.Bot.ID}}/probe" style="margin-left:auto">
+    <button class="btn btn--ghost btn--small" type="submit">Проверить модель</button>
+  </form>
+</div>
+
+{{/* Проба — главное отличие от обычного конструктора: ручки показываются
+     только те, которые модель приняла. */}}
+<div class="card" style="margin-bottom:22px">
+  <h2>Что умеет модель</h2>
+  {{if .Probed}}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <span class="pill {{if .Caps.Streaming}}pill--human{{else}}pill--off{{end}}">поток</span>
+      <span class="pill {{if .Caps.Tools}}pill--human{{else}}pill--off{{end}}">инструменты</span>
+      <span class="pill {{if .Caps.Temperature}}pill--human{{else}}pill--off{{end}}">температура</span>
+      <span class="pill {{if .Caps.ReasoningEffort}}pill--human{{else}}pill--off{{end}}">усилие рассуждения</span>
+      <span class="pill {{if .Caps.ReportsReasoning}}pill--wait{{else}}pill--off{{end}}">считает рассуждение</span>
+    </div>
+    {{with .Caps.Notes}}
+      {{range .}}<p class="field__hint" style="margin:0 0 4px">{{.}}</p>{{end}}
+    {{end}}
+  {{else}}
+    <p class="field__hint" style="margin:0">
+      Модель ещё не проверяли. Проба стоит несколько сотен токенов и делается один раз:
+      после неё Hark перестанет слать параметры, которые эта модель отвергает.
+    </p>
+  {{end}}
+</div>
+
+<form method="post" action="/bots/{{.Bot.ID}}">
+  <div class="card" style="margin-bottom:22px">
+    <h2>Кто отвечает</h2>
+    <div class="field">
+      <label for="name">Название</label>
+      <input id="name" type="text" name="name" value="{{.Bot.Name}}" required>
+    </div>
+    <div class="field">
+      <label for="instructions">Инструкции</label>
+      <textarea id="instructions" name="instructions" style="min-height:150px">{{.Bot.Instructions}}</textarea>
+      <div class="field__hint">Кто бот, о чём говорит и чего не обещает. Правила про инструменты Hark добавит сам.</div>
+    </div>
+    <div class="field">
+      <label for="greeting">Первая реплика</label>
+      <input id="greeting" type="text" name="greeting" value="{{.Bot.Greeting}}">
+    </div>
+    <div class="field">
+      <label for="escalate_after">Сдаваться после скольких неудач</label>
+      <input id="escalate_after" type="number" name="escalate_after" value="{{.Bot.EscalateAfter}}" min="1" max="10">
+      <div class="field__hint">Бот и сам может позвать человека, когда не хватает данных или прав.</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:22px">
+    <h2>Модель</h2>
+    <div class="row">
+      <div class="field">
+        <label for="provider">Поставщик</label>
+        <select id="provider" name="provider">
+          <option value="openai" {{if eq .Bot.Provider "openai"}}selected{{end}}>OpenAI и совместимые</option>
+          <option value="anthropic" {{if eq .Bot.Provider "anthropic"}}selected{{end}}>Anthropic</option>
+        </select>
+        <div class="field__hint">Совместимые — это Ollama, vLLM, LM Studio, OpenRouter и свой сервер.</div>
+      </div>
+      <div class="field">
+        <label for="model">Модель</label>
+        <input id="model" type="text" name="model" value="{{.Bot.Model}}" placeholder="gpt-5-nano">
+      </div>
+    </div>
+    <div class="field">
+      <label for="base_url">Свой адрес API</label>
+      <input id="base_url" type="text" name="base_url" value="{{.Bot.BaseURL}}" placeholder="http://localhost:11434/v1">
+      <div class="field__hint">Пусто — берётся адрес поставщика по умолчанию.</div>
+    </div>
+    <div class="field">
+      <label for="api_key">Ключ</label>
+      <input id="api_key" type="password" name="api_key" placeholder="{{if .Bot.APIKey}}сохранён, оставьте пустым{{else}}не задан{{end}}" autocomplete="off">
+      <div class="field__hint">Пустое поле не стирает сохранённый ключ.</div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="max_tokens">Потолок ответа, токенов</label>
+        <input id="max_tokens" type="number" name="max_tokens" value="{{.Bot.MaxTokens}}" min="100" max="32000">
+      </div>
+      {{if or (not .Probed) .Caps.Temperature}}
+      <div class="field">
+        <label for="temperature">Температура</label>
+        <input id="temperature" type="text" name="temperature" value="{{.Bot.Temperature}}" placeholder="0.7">
+        {{if not .Probed}}<div class="field__hint">Проверьте модель: не все её принимают.</div>{{end}}
+      </div>
+      {{end}}
+      {{if or (not .Probed) .Caps.ReasoningEffort}}
+      <div class="field">
+        <label for="reasoning">Усилие рассуждения</label>
+        <select id="reasoning" name="reasoning">
+          <option value="" {{if eq .Bot.Reasoning ""}}selected{{end}}>по умолчанию</option>
+          <option value="low" {{if eq .Bot.Reasoning "low"}}selected{{end}}>низкое, дешевле и быстрее</option>
+          <option value="medium" {{if eq .Bot.Reasoning "medium"}}selected{{end}}>среднее</option>
+          <option value="high" {{if eq .Bot.Reasoning "high"}}selected{{end}}>высокое</option>
+        </select>
+      </div>
+      {{end}}
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="price_in">Цена ввода, копеек за миллион токенов</label>
+        <input id="price_in" type="number" name="price_in" value="{{.Bot.PriceIn}}" min="0">
+      </div>
+      <div class="field">
+        <label for="price_out">Цена вывода, копеек за миллион</label>
+        <input id="price_out" type="number" name="price_out" value="{{.Bot.PriceOut}}" min="0">
+        <div class="field__hint">Рассуждение оплачивается как вывод: его не видно в ответе, но оно в счёте.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:22px">
+    <h2>Как выглядит на сайте</h2>
+    <div class="row">
+      <div class="field">
+        <label for="accent">Цвет</label>
+        <input id="accent" type="color" name="accent" value="{{.Bot.Accent}}" style="height:42px;padding:4px">
+      </div>
+      <div class="field">
+        <label for="position">Угол</label>
+        <select id="position" name="position">
+          <option value="right" {{if eq .Bot.Position "right"}}selected{{end}}>справа</option>
+          <option value="left" {{if eq .Bot.Position "left"}}selected{{end}}>слева</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="launcher_text">Надпись на кнопке</label>
+        <input id="launcher_text" type="text" name="launcher_text" value="{{.Bot.LauncherText}}" placeholder="Спросить">
+      </div>
+    </div>
+    <div class="field">
+      <label for="allowed_origins">Домены, где разрешён виджет</label>
+      <textarea id="allowed_origins" name="allowed_origins" style="min-height:70px" placeholder="https://example.com">{{.Bot.AllowedOrigins}}</textarea>
+      <div class="field__hint">По одному в строке. Пусто — виджет работает на любом сайте.</div>
+    </div>
+    <div class="field">
+      <label>Как поставить</label>
+      <div class="io">&lt;script src="{{"{{адрес Hark}}"}}/widget/hark.js" data-bot="{{.Bot.Slug}}" defer&gt;&lt;/script&gt;</div>
+    </div>
+    <div class="field">
+      <label style="display:flex;gap:8px;align-items:center">
+        <input type="checkbox" name="enabled" style="width:auto" {{if .Bot.Enabled}}checked{{end}}>
+        Бот включён
+      </label>
+    </div>
+  </div>
+
+  <button class="btn" type="submit">Сохранить</button>
+</form>
+
+<h2 id="tools" style="margin-top:36px">Инструменты</h2>
+<p class="lede">Чем бот пользуется, чтобы не выдумывать ответы.</p>
+
+{{range .Tools}}
+<div class="card" style="margin-bottom:14px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <span class="mono" style="font-size:15px;color:var(--accent)">{{.Name}}</span>
+    <span class="pill">{{if eq .Kind "http"}}вызов API{{else}}запрос в базу{{end}}</span>
+    {{if not .Enabled}}<span class="pill pill--off">выключен</span>{{end}}
+    <form method="post" action="/bots/{{$.Bot.ID}}/tools/{{.ID}}/delete" style="margin-left:auto">
+      <button class="btn btn--danger btn--small" type="submit">Удалить</button>
+    </form>
+  </div>
+  <p style="color:var(--t2);margin:0 0 8px">{{.Description}}</p>
+  {{if eq .Kind "http"}}
+    <div class="io">{{.Method}} {{.URL}}</div>
+  {{else}}
+    <div class="io">таблицы: {{.AllowedTables}} · не больше {{.RowLimit}} строк · только SELECT</div>
+  {{end}}
+</div>
+{{else}}
+<div class="card empty" style="margin-bottom:14px">Инструментов нет: бот отвечает только тем, что знает из инструкций.</div>
+{{end}}
+
+<div class="card">
+  <h2>Добавить инструмент</h2>
+  <form method="post" action="/bots/{{.Bot.ID}}/tools">
+    <div class="row">
+      <div class="field">
+        <label for="kind">Вид</label>
+        <select id="kind" name="kind">
+          <option value="http">вызов API</option>
+          <option value="sql">запрос в базу</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="tool_name">Имя для модели</label>
+        <input id="tool_name" type="text" name="name" placeholder="order_status" required>
+      </div>
+    </div>
+    <div class="field">
+      <label for="tool_description">Описание</label>
+      <input id="tool_description" type="text" name="description" placeholder="Статус заказа по номеру">
+      <div class="field__hint">Это читает модель, чтобы решить, когда звать инструмент. Для базы перечислите таблицы и колонки.</div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="method">Метод</label>
+        <select id="method" name="method">
+          <option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="url">Адрес</label>
+        <input id="url" type="text" name="url" placeholder="https://api.example.com/orders/{id}">
+      </div>
+    </div>
+    <div class="field">
+      <label for="parameters">Схема параметров, JSON Schema</label>
+      <textarea id="parameters" name="parameters" placeholder='{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}'></textarea>
+    </div>
+    <div class="field">
+      <label for="headers">Заголовки, JSON</label>
+      <input id="headers" type="text" name="headers" placeholder='{"Authorization":"Bearer ..."}'>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="driver">База: движок</label>
+        <select id="driver" name="driver">
+          <option value="sqlite">SQLite</option>
+          <option value="postgres">PostgreSQL</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="dsn">Строка подключения</label>
+        <input id="dsn" type="text" name="dsn" placeholder="postgres://readonly:...@host/db">
+        <div class="field__hint">Подключайте пользователем без права записи. Ограничители Hark — вторая линия, а не первая.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="allowed_tables">Разрешённые таблицы</label>
+        <input id="allowed_tables" type="text" name="allowed_tables" placeholder="orders, products">
+      </div>
+      <div class="field">
+        <label for="row_limit">Строк не больше</label>
+        <input id="row_limit" type="number" name="row_limit" value="50" min="1" max="500">
+      </div>
+      <div class="field">
+        <label for="timeout_ms">Таймаут, мс</label>
+        <input id="timeout_ms" type="number" name="timeout_ms" value="5000" min="500" max="60000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label style="display:flex;gap:8px;align-items:center">
+        <input type="checkbox" name="enabled" style="width:auto" checked>
+        Включён
+      </label>
+    </div>
+    <button class="btn" type="submit">Добавить</button>
+  </form>
+</div>
+
+{{template "foot" .}}

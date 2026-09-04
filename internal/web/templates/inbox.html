@@ -1,0 +1,35 @@
+{{template "head" .}}
+<h1>Разговоры</h1>
+<p class="lede">Ждущие человека всегда сверху.</p>
+
+<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+  <a class="btn btn--ghost btn--small" href="/inbox">Все</a>
+  <a class="btn btn--ghost btn--small" href="/inbox?state=waiting">Ждут человека</a>
+  <a class="btn btn--ghost btn--small" href="/inbox?state=human">У менеджера</a>
+  <a class="btn btn--ghost btn--small" href="/inbox?state=open">Ведёт бот</a>
+</div>
+
+<div class="card" style="padding:0">
+  <table>
+    <thead><tr><th>Состояние</th><th>Причина или страница</th><th>Начат</th><th>Обновлён</th></tr></thead>
+    <tbody>
+    {{range .Conversations}}
+      <tr>
+        <td style="width:150px">
+          <span class="pill {{if eq .State "waiting"}}pill--wait{{else if eq .State "human"}}pill--human{{end}}">{{stateName .State}}</span>
+        </td>
+        <td>
+          <a href="/conversations/{{.ID}}">
+            {{if .EscalateReason}}{{trimTo 70 .EscalateReason}}{{else}}{{trimTo 60 .PageURL}}{{end}}
+          </a>
+        </td>
+        <td class="muted mono" style="width:150px">{{when .CreatedAt}}</td>
+        <td class="muted mono" style="width:150px">{{when .UpdatedAt}}</td>
+      </tr>
+    {{else}}
+      <tr><td colspan="4" class="empty">Ничего не найдено.</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+{{template "foot" .}}

@@ -1,0 +1,133 @@
+# Hark
+
+A self-hosted AI chat bot for your site, where every answer carries a receipt.
+
+[Русский](README.ru.md) · [Deutsch](README.de.md)
+
+![The receipt behind an answer](screenshots/01-receipt.png)
+
+## What it is
+
+Chat bot builders are everywhere and they are all black boxes. The bot tells a customer something wrong and nobody can reconstruct why: which instruction fired, what the API returned, what the model actually read. The manager who picks up the conversation inherits the same fog.
+
+Hark answers that question on screen. Open any reply and the receipt unfolds: the instruction, every tool call with its request and response, the rows read from your database, tokens split into prompt, completion and reasoning, and what it cost.
+
+No SaaS, no plans, no seats. One binary, one file next to it.
+
+## Not tied to one model
+
+The bot runs on OpenAI, on Anthropic, and on anything speaking the OpenAI chat format: Ollama, vLLM, LM Studio, OpenRouter, your own server. Switching is two fields in the settings.
+
+Providers disagree about what they accept, and the disagreement is not in the docs. `gpt-5-nano` rejects `temperature` outright: *"Only the default (1) value is supported"*. It also rejects the older `max_tokens`. A builder that shows a temperature slider breaks every request against that model.
+
+So Hark asks. One button sends a few tiny requests and records what came back:
+
+![Model settings driven by the probe](screenshots/02-bot.png)
+
+The settings then show only the knobs that model actually takes. Nothing else is offered, and nothing rejected is ever sent.
+
+## Reasoning is most of your bill
+
+Thinking models spend tokens you never see. Measured on a real conversation through this product:
+
+| | tokens |
+|---|---|
+| prompt | 777 |
+| completion | 288 |
+| of which reasoning | **192** |
+
+Two thirds of the paid output is not in the answer. Hark stores reasoning tokens in their own column and shows the share on the conversation and in analytics, because a cost report that folds them into "completion" is not wrong so much as useless.
+
+![Output tokens by day, reasoning apart](screenshots/04-analytics.png)
+
+## Tools
+
+**HTTP.** Any endpoint. Method, URL template with `{placeholders}`, headers, body. Arguments the model produces are substituted into the path and the query.
+
+**SQL.** A read-only connection to your database. The model writes the query; Hark decides whether it runs:
+
+1. `SELECT` and `WITH … SELECT` only
+2. no second statement after a semicolon
+3. no `INSERT`, `DROP`, `ATTACH`, `PRAGMA`, `load_file`, `INTO OUTFILE` and friends
+4. tables checked against an allowlist, subqueries included
+5. row cap applied by wrapping the query rather than appending `LIMIT`, because an appended one is escaped by `UNION`
+6. statement timeout
+
+That is defence in depth, not a substitute for permissions. Connect with a user that has no write grant. The field says so in the form.
+
+A rejected query is not swallowed: it goes into the receipt, so you can see the bot tried to read a table it should not have.
+
+## Handing over to a person
+
+The bot gives up through a tool call, not through phrase matching. It says so explicitly, the reason travels to the queue, and the conversation moves to *waiting*. The manager sees the reason and the whole receipt before typing a word.
+
+![The queue](screenshots/03-inbox.png)
+
+## The widget
+
+One tag on your page:
+
+```html
+<script src="https://hark.example.com/widget/hark.js" data-bot="shop" defer></script>
+```
+
+10 KB, no dependencies, markup inside a shadow root so neither side's CSS leaks. Streams the answer over SSE, picks up manager replies by polling, follows the colour and corner you set, and has its own light and dark themes.
+
+![The widget on someone else's site](screenshots/05-widget.png)
+
+Origins are restricted per bot. An empty list means any site.
+
+## Install
+
+```bash
+go build -o hark .
+./hark -manager you@example.com -password secret
+./hark
+```
+
+Then open `http://localhost:8080`. The binary carries the admin UI, the templates and the widget inside it; the database is a file next to it.
+
+To look around first:
+
+```bash
+./hark -demo     # a shop, two tools, four conversations with receipts
+```
+
+The demo seeds without an API key and spends nothing: the receipts are recorded, not generated.
+
+## Configuration
+
+| Flag | Env | Default |
+|---|---|---|
+| `-addr` | `HARK_ADDR` | `:8080` |
+| `-db` | `HARK_DB` | `hark.db` |
+
+Model keys live in the database per bot, not in the environment: different bots can use different providers.
+
+## Layout
+
+```
+internal/llm      providers, capability probe
+internal/tools    HTTP and SQL tools with their guards
+internal/chat     the conversation loop that writes the receipt
+internal/store    SQLite schema and queries
+internal/web      admin, widget API, templates, the widget itself
+```
+
+## Tests
+
+```bash
+go test ./...
+```
+
+The engine, the receipt and the SQL guards are covered without touching the network: a fake provider replays a scripted conversation while the HTTP tool calls a real server started next to the test.
+
+Live tests against a real provider are skipped unless you ask for them:
+
+```bash
+HARK_LIVE_KEY=... HARK_LIVE_MODEL=gpt-5-nano go test ./internal/llm -run Live -v
+```
+
+## Licence
+
+MIT.

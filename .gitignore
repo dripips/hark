@@ -1,0 +1,10 @@
+hark.db
+hark.db-*
+hark-demo-shop.db
+hark-demo-shop.db-*
+*.env
+out/
+bin/
+tmp/
+hark
+hark.exe
