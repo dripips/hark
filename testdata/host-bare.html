@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Полка — деревянные полки и крепёж</title>
+<style>
+  /* Витрина для проверки виджета: обычный чужой сайт со своей вёрсткой.
+     Если виджет что-то ломает, это видно здесь. */
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #fbfaf8; color: #1b1a18;
+    font: 16px/1.6 Georgia, "Times New Roman", serif;
+  }
+  header { border-bottom: 1px solid #e6e2dc; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 28px; }
+  .bar { display: flex; align-items: center; gap: 28px; height: 68px; }
+  .logo { font-weight: 700; letter-spacing: -0.02em; font-size: 19px; }
+  nav a { color: #4a463f; text-decoration: none; margin-right: 20px; font-size: 15px; }
+  .hero { padding: 64px 0 40px; }
+  h1 { font-size: 42px; line-height: 1.15; margin: 0 0 14px; letter-spacing: -0.02em; }
+  .lede { color: #57524a; max-width: 560px; margin: 0 0 28px; }
+  .goods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding-bottom: 72px; }
+  .good { background: #fff; border: 1px solid #e6e2dc; border-radius: 4px; padding: 20px; }
+  .good__pic { height: 120px; border-radius: 3px; background: linear-gradient(160deg, #d9cdb8, #b39d7c); margin-bottom: 14px; }
+  .good__name { font-size: 16px; margin: 0 0 6px; }
+  .good__price { color: #57524a; font-size: 15px; }
+  footer { border-top: 1px solid #e6e2dc; padding: 28px 0; color: #7a736a; font-size: 14px; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #131211; color: #ece9e4; }
+    header, footer { border-color: #2a2723; }
+    nav a, .lede, .good__price, footer { color: #a9a29a; }
+    .good { background: #1a1917; border-color: #2a2723; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <span class="logo">Полка</span>
+    <nav>
+      <a href="#">Каталог</a><a href="#">Доставка</a><a href="#">Оплата</a><a href="#">Контакты</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Деревянные полки<br>и крепёж к ним</h1>
+    <p class="lede">Дубовые полки двух размеров, стальные кронштейны и комплекты крепежа. Доставка по стране от трёх дней.</p>
+  </section>
+
+  <section class="goods">
+    <article class="good">
+      <div class="good__pic"></div>
+      <h2 class="good__name">Полка дубовая, 80 см</h2>
+      <p class="good__price">5400 ₽ · в наличии</p>
+    </article>
+    <article class="good">
+      <div class="good__pic"></div>
+      <h2 class="good__name">Полка дубовая, 120 см</h2>
+      <p class="good__price">7900 ₽ · нет в наличии</p>
+    </article>
+    <article class="good">
+      <div class="good__pic"></div>
+      <h2 class="good__name">Кронштейн стальной</h2>
+      <p class="good__price">890 ₽ · в наличии</p>
+    </article>
+  </section>
+</main>
+
+<footer><div class="wrap">Полка · демонстрационная витрина для Hark</div></footer>
+
+<script src="http://localhost:8199/widget/hark.js" data-bot="bare" defer></script>
+</body>
+</html>

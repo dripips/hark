@@ -35,6 +35,10 @@ func Open(path string) (*DB, error) {
 	if _, err := handle.Exec(schema); err != nil {
 		return nil, fmt.Errorf("схема: %w", err)
 	}
+	// База могла быть создана прошлой версией: досыпаем недостающие колонки.
+	if err := migrate(handle); err != nil {
+		return nil, fmt.Errorf("миграция: %w", err)
+	}
 	return &DB{handle}, nil
 }
 
@@ -62,6 +66,31 @@ type Bot struct {
 	AllowedOrigins string
 	EscalateAfter  int
 	Enabled        bool
+
+	// Приветственный экран и подсказки виджета.
+	WelcomeTitle  string
+	WelcomeText   string
+	QuickReplies  string
+	Disclaimer    string
+	PrivacyURL    string
+	PrivacyLabel  string
+	LauncherStyle string
+	AvatarEmoji   string
+	CornerRadius  int
+
+	// Theme — вся внешность одним JSON. Разбор в Design().
+	Theme string
+}
+
+// Quick разбирает готовые вопросы: по одному в строке, пустые пропускаются.
+func (b Bot) Quick() []string {
+	var out []string
+	for _, item := range strings.Split(b.QuickReplies, "\n") {
+		if item = strings.TrimSpace(item); item != "" {
+			out = append(out, item)
+		}
+	}
+	return out
 }
 
 // Caps разбирает сохранённую пробу. Пустая или битая строка означает
@@ -157,14 +186,18 @@ type Receipt struct {
 
 const botColumns = `id, slug, name, instructions, greeting, provider, base_url, model,
 	api_key, max_tokens, temperature, reasoning, capabilities, price_in, price_out,
-	accent, position, launcher_text, allowed_origins, escalate_after, enabled`
+	accent, position, launcher_text, allowed_origins, escalate_after, enabled,
+	welcome_title, welcome_text, quick_replies, disclaimer, privacy_url, privacy_label,
+	launcher_style, avatar_emoji, corner_radius, theme`
 
 func scanBot(row interface{ Scan(...any) error }) (*Bot, error) {
 	var b Bot
 	err := row.Scan(&b.ID, &b.Slug, &b.Name, &b.Instructions, &b.Greeting, &b.Provider,
 		&b.BaseURL, &b.Model, &b.APIKey, &b.MaxTokens, &b.Temperature, &b.Reasoning,
 		&b.Capabilities, &b.PriceIn, &b.PriceOut, &b.Accent, &b.Position, &b.LauncherText,
-		&b.AllowedOrigins, &b.EscalateAfter, &b.Enabled)
+		&b.AllowedOrigins, &b.EscalateAfter, &b.Enabled,
+		&b.WelcomeTitle, &b.WelcomeText, &b.QuickReplies, &b.Disclaimer,
+		&b.PrivacyURL, &b.PrivacyLabel, &b.LauncherStyle, &b.AvatarEmoji, &b.CornerRadius, &b.Theme)
 	if err != nil {
 		return nil, err
 	}
@@ -203,12 +236,17 @@ func (db *DB) SaveBot(ctx context.Context, b *Bot) error {
 		result, err := db.ExecContext(ctx, `
 			INSERT INTO bots (slug, name, instructions, greeting, provider, base_url, model,
 				api_key, max_tokens, temperature, reasoning, capabilities, price_in, price_out,
-				accent, position, launcher_text, allowed_origins, escalate_after, enabled)
-			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+				accent, position, launcher_text, allowed_origins, escalate_after, enabled,
+				welcome_title, welcome_text, quick_replies, disclaimer, privacy_url,
+				privacy_label, launcher_style, avatar_emoji, corner_radius, theme)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			b.Slug, b.Name, b.Instructions, b.Greeting, b.Provider, b.BaseURL, b.Model,
 			b.APIKey, b.MaxTokens, b.Temperature, b.Reasoning, b.Capabilities,
 			b.PriceIn, b.PriceOut, b.Accent, b.Position, b.LauncherText,
-			b.AllowedOrigins, b.EscalateAfter, b.Enabled)
+			b.AllowedOrigins, b.EscalateAfter, b.Enabled,
+			b.WelcomeTitle, b.WelcomeText, b.QuickReplies, b.Disclaimer,
+			b.PrivacyURL, b.PrivacyLabel, b.LauncherStyle, b.AvatarEmoji, b.CornerRadius,
+			b.Theme)
 		if err != nil {
 			return err
 		}
@@ -219,12 +257,17 @@ func (db *DB) SaveBot(ctx context.Context, b *Bot) error {
 		UPDATE bots SET slug=?, name=?, instructions=?, greeting=?, provider=?, base_url=?,
 			model=?, api_key=?, max_tokens=?, temperature=?, reasoning=?, capabilities=?,
 			price_in=?, price_out=?, accent=?, position=?, launcher_text=?, allowed_origins=?,
-			escalate_after=?, enabled=?, updated_at=datetime('now')
+			escalate_after=?, enabled=?, welcome_title=?, welcome_text=?, quick_replies=?,
+			disclaimer=?, privacy_url=?, privacy_label=?, launcher_style=?, avatar_emoji=?,
+			corner_radius=?, theme=?, updated_at=datetime('now')
 		WHERE id=?`,
 		b.Slug, b.Name, b.Instructions, b.Greeting, b.Provider, b.BaseURL, b.Model,
 		b.APIKey, b.MaxTokens, b.Temperature, b.Reasoning, b.Capabilities,
 		b.PriceIn, b.PriceOut, b.Accent, b.Position, b.LauncherText, b.AllowedOrigins,
-		b.EscalateAfter, b.Enabled, b.ID)
+		b.EscalateAfter, b.Enabled,
+		b.WelcomeTitle, b.WelcomeText, b.QuickReplies, b.Disclaimer,
+		b.PrivacyURL, b.PrivacyLabel, b.LauncherStyle, b.AvatarEmoji, b.CornerRadius,
+		b.Theme, b.ID)
 	return err
 }
 

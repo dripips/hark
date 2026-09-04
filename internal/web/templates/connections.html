@@ -1,0 +1,46 @@
+{{template "head" .}}
+
+<h1>Подключения</h1>
+<p class="lede" style="max-width:62ch">
+  Всё, откуда боты берут настоящие данные: ваши адреса и базы. Здесь видно
+  сразу все, а настраиваются они внутри своего бота.
+</p>
+
+{{if .Rows}}
+<div class="grid grid--2">
+{{range .Rows}}
+  <div class="card conn">
+    <div class="conn__row">
+      <span class="mono conn__name">{{.Tool.Name}}</span>
+      <span class="pill">{{if eq .Tool.Kind "http"}}свой API{{else}}база данных{{end}}</span>
+      {{if not .Tool.Enabled}}<span class="pill pill--off">выключено</span>{{end}}
+    </div>
+    <p class="conn__desc">{{.Tool.Description}}</p>
+    {{if eq .Tool.Kind "http"}}
+      <div class="io">{{.Tool.Method}} {{.Tool.URL}}</div>
+    {{else}}
+      <div class="io">{{.Tool.Driver}} · {{.Tool.AllowedTables}}</div>
+    {{end}}
+    <a class="btn btn--ghost btn--small" style="margin-top:12px"
+       href="/bots/{{.Bot.ID}}/connections/{{.Tool.ID}}">{{.Bot.Name}} · изменить</a>
+  </div>
+{{end}}
+</div>
+{{else}}
+<div class="card empty" style="text-align:center;padding:44px 24px">
+  <h2 style="margin:0 0 8px">Подключений пока нет</h2>
+  <p class="lede" style="max-width:460px;margin:0 auto 22px">
+    Пока их нет, боты отвечают только тем, что написано в инструкциях. Подключение
+    добавляется внутри бота: свой API или база только на чтение.
+  </p>
+  {{if .Bots}}
+    {{range .Bots}}
+    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/connections">{{.Name}}</a>
+    {{end}}
+  {{else}}
+    <a class="btn" href="/bots">Сначала завести бота</a>
+  {{end}}
+</div>
+{{end}}
+
+{{template "foot" .}}

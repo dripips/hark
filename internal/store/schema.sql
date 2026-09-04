@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS bots (
   price_in       INTEGER NOT NULL DEFAULT 0,
   price_out      INTEGER NOT NULL DEFAULT 0,
   -- Внешность виджета.
-  accent         TEXT    NOT NULL DEFAULT '#2563eb',
+  accent         TEXT    NOT NULL DEFAULT '#059669',
   position       TEXT    NOT NULL DEFAULT 'right',
   launcher_text  TEXT    NOT NULL DEFAULT '',
   -- Домены, которым разрешено встраивать виджет. Пусто — любой.

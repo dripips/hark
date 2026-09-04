@@ -70,12 +70,39 @@ func (s *Server) widgetConfig(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "бот недоступен", http.StatusNotFound)
 		return
 	}
+	// Предпросмотр в админке присылает несохранённую тему и подменяет ей
+	// сохранённую. Правки видны только тому, кто открыл страницу с этими
+	// параметрами: чужой запрос по-прежнему получает то, что в базе.
+	if preview := r.URL.Query().Get("preview"); preview != "" && json.Valid([]byte(preview)) {
+		copied := *bot
+		copied.Theme = preview
+		if value := r.URL.Query().Get("launcher"); value != "" {
+			copied.LauncherStyle = value
+		}
+		if value := r.URL.Query().Get("side"); value != "" {
+			copied.Position = value
+		}
+		bot = &copied
+	}
+
+	// Отдаём только то, что нужно нарисовать. Настройки модели, ключи и
+	// подключения сюда не попадают: этот ответ читает чужая страница.
 	writeJSON(w, map[string]any{
-		"name":     bot.Name,
-		"greeting": bot.Greeting,
-		"accent":   bot.Accent,
-		"position": bot.Position,
-		"launcher": bot.LauncherText,
+		"name":           bot.Name,
+		"greeting":       bot.Greeting,
+		"accent":         bot.Accent,
+		"position":       bot.Position,
+		"launcher":       bot.LauncherText,
+		"launcher_style": bot.LauncherStyle,
+		"avatar":         bot.AvatarEmoji,
+		"radius":         bot.CornerRadius,
+		"welcome_title":  bot.WelcomeTitle,
+		"welcome_text":   bot.WelcomeText,
+		"quick":          bot.Quick(),
+		"disclaimer":     bot.Disclaimer,
+		"privacy_url":    bot.PrivacyURL,
+		"privacy_label":  bot.PrivacyLabel,
+		"design":         designPayload(bot),
 	})
 }
 
@@ -239,4 +266,153 @@ func trim(s string, limit int) string {
 		return s
 	}
 	return s[:limit]
+}
+
+// designPayload превращает тему в готовые значения CSS. Считает сервер, а не
+// виджет: чужая страница получает числа и цвета, а не правила их вывода —
+// иначе предпросмотр в админке и живой виджет разъезжаются.
+func designPayload(bot *store.Bot) map[string]any {
+	d := bot.Design()
+
+	out := map[string]any{
+		"font":        d.Stack(),
+		"font_url":    d.FontURL,
+		"font_size":   d.FontSize,
+		"line_height": d.LineHeight,
+		"step":        d.Step(),
+		"width":       d.Width,
+		"height":      d.Height,
+		"offset":      d.Offset,
+		"radius":      d.Radius,
+		"bubble":      d.Bubble,
+		"shadow":      shadowCSS(d.Shadow),
+		// Без тени панель на белом сайте теряет край, поэтому вместо неё
+		// появляется волосяная линия.
+		"panel_border": pickBorder(d),
+		"scheme":       d.Scheme,
+		"accent":       d.Accent,
+		"on_accent":    d.OnAccent,
+		// ink — акцент, пригодный для текста на полотне. Заливка и надпись
+		// одним цветом читаются по-разному, и бледный акцент как текст пропадает.
+		"ink":         d.Ink(d.Surface),
+		"surface":     d.Surface,
+		"text":        d.Text,
+		"muted":       d.Muted,
+		"border":      d.Border,
+		"bot_bubble":  d.BotBubble,
+		"bot_text":    d.BotText,
+		"user_bubble": d.UserBubble,
+		"user_text":   d.UserText,
+		"backdrop":    backdropCSS(d, d.BackdropFrom, d.Surface),
+		"header":      headerCSS(d),
+		"head_text":   headText(d),
+		"subtitle":    d.Subtitle,
+	}
+
+	// Тёмная палитра нужна только при «как на устройстве»: при явно выбранной
+	// схеме виджет одинаков везде. Считается из цветов владельца, а не из
+	// зашитого набора — иначе бежевая панель в тёмной системе становится чужой
+	// серой.
+	if d.Scheme == "auto" {
+		dark := d
+		dark.Surface = d.DarkSurface
+		dark.Text = d.DarkText
+		dark.Muted = ""
+		dark.Border = ""
+		dark.BotBubble = ""
+		dark.BotText = ""
+		dark.BackdropFrom = d.DarkBackdrop
+		// Второй цвет градиента тоже сбрасываем: со светлым концом тёмная
+		// лента уходила из чёрного в кремовый.
+		dark.BackdropTo = ""
+		dark = store.Bot{Theme: dark.Sanitized(), Accent: d.Accent}.Design()
+
+		out["dark"] = map[string]any{
+			"surface":    dark.Surface,
+			"text":       dark.Text,
+			"muted":      dark.Muted,
+			"border":     dark.Border,
+			"bot_bubble": dark.BotBubble,
+			"bot_text":   dark.BotText,
+			"ink":        dark.Ink(dark.Surface),
+			"backdrop":   backdropCSS(dark, d.DarkBackdrop, dark.Surface),
+			"header":     headerCSS(dark),
+			"head_text":  headText(dark),
+		}
+	}
+	return out
+}
+
+// backdropCSS собирает фон ленты. Точки и сетка рисуются градиентами, чтобы
+// виджет остался одним файлом без картинок.
+func backdropCSS(d store.Design, base, surface string) string {
+	switch d.BackdropKind {
+	case "gradient":
+		return fmt.Sprintf("linear-gradient(%ddeg, %s, %s)", d.BackdropAngle, base, d.BackdropTo)
+	case "dots":
+		return fmt.Sprintf("radial-gradient(%s 1px, transparent 1px) 0 0/16px 16px, %s",
+			d.Border, base)
+	case "grid":
+		return fmt.Sprintf(
+			"linear-gradient(%s 1px, transparent 1px) 0 0/22px 22px, "+
+				"linear-gradient(90deg, %s 1px, transparent 1px) 0 0/22px 22px, %s",
+			d.Border, d.Border, base)
+	case "image":
+		if d.BackdropImage == "" {
+			return base
+		}
+		// Полупрозрачная пелена цвета полотна поверх картинки: без неё текст
+		// реплик читается ровно до первого светлого пятна.
+		return fmt.Sprintf("linear-gradient(%s, %s), url(%s) center/cover no-repeat, %s",
+			fade(surface, 0.72), fade(surface, 0.72), store.Quoted(d.BackdropImage), base)
+	default:
+		return base
+	}
+}
+
+func headerCSS(d store.Design) string {
+	switch d.HeaderKind {
+	case "surface":
+		return d.Surface
+	case "gradient":
+		return fmt.Sprintf("linear-gradient(135deg, %s, %s)", d.Accent, store.Shift(d.Accent, -28))
+	default:
+		return d.Accent
+	}
+}
+
+// headText — цвет надписи в шапке. Шапка цвета полотна берёт обычный текст,
+// залитая акцентом — контрастную к нему пару.
+func headText(d store.Design) string {
+	if d.HeaderKind == "surface" {
+		return d.Text
+	}
+	return d.OnAccent
+}
+
+func pickBorder(d store.Design) string {
+	if d.Shadow != "none" {
+		return "none"
+	}
+	return "1px solid " + d.Border
+}
+
+func shadowCSS(kind string) string {
+	switch kind {
+	case "none":
+		return "none"
+	case "deep":
+		return "0 32px 80px rgba(9,12,20,.34), 0 4px 14px rgba(9,12,20,.16)"
+	default:
+		return "0 18px 48px rgba(9,12,20,.18), 0 2px 8px rgba(9,12,20,.08)"
+	}
+}
+
+// fade переводит шестнадцатеричный цвет в rgba с заданной непрозрачностью.
+func fade(color string, alpha float64) string {
+	var r, g, b int
+	if _, err := fmt.Sscanf(color, "#%02x%02x%02x", &r, &g, &b); err != nil {
+		return color
+	}
+	return fmt.Sprintf("rgba(%d,%d,%d,%.2f)", r, g, b, alpha)
 }

@@ -16,6 +16,7 @@
       <a href="/" {{if eq .Path "/"}}aria-current="page"{{end}}>Обзор</a>
       <a href="/inbox" {{if eq .Path "/inbox"}}aria-current="page"{{end}}>Разговоры</a>
       <a href="/bots" {{if eq .Path "/bots"}}aria-current="page"{{end}}>Боты</a>
+      <a href="/connections" {{if eq .Path "/connections"}}aria-current="page"{{end}}>Подключения</a>
       <a href="/analytics" {{if eq .Path "/analytics"}}aria-current="page"{{end}}>Аналитика</a>
       <form method="post" action="/logout" style="margin-left:8px">
         <button class="btn btn--ghost btn--small" type="submit">Выйти</button>
@@ -25,6 +26,30 @@
 </header>
 {{end}}
 <main class="wrap">
+{{end}}
+
+{{/* Шапка страницы бота с вкладками. Вкладка — это отдельный адрес, а не
+     якорь: на длинной форме подключения оказывались ниже кнопки «Сохранить»,
+     и владелец их просто не видел. */}}
+{{define "bothead"}}
+<div class="bothead">
+  <div class="bothead__row">
+    <div>
+      <a class="bothead__back" href="/bots">Боты</a>
+      <h1>{{.Bot.Name}}</h1>
+      <p class="lede">
+        <span class="mono">{{.Bot.Provider}} · {{.Bot.Model}}</span>
+        {{if not .Bot.Enabled}}<span class="pill pill--off">выключен</span>{{end}}
+      </p>
+    </div>
+  </div>
+  <nav class="tabs">
+    {{$tab := .Tab}}{{$id := .Bot.ID}}
+    {{range .Tabs}}
+    <a class="tabs__item{{if eq $tab .Slug}} is-on{{end}}" href="/bots/{{$id}}/{{.Slug}}">{{.Title}}</a>
+    {{end}}
+  </nav>
+</div>
 {{end}}
 
 {{define "foot"}}

@@ -50,7 +50,7 @@ func seedDemo(db *store.DB) error {
 		APIKey: os.Getenv("OPENAI_API_KEY"), MaxTokens: 1200, Reasoning: "low",
 		// Цена gpt-5-nano на сентябрь 2026, в копейках за миллион токенов.
 		PriceIn: 4, PriceOut: 32,
-		Accent: "#059669", Position: "right", LauncherText: "Спросить",
+		Accent: store.DefaultAccent, Position: "right", LauncherText: "Спросить",
 		EscalateAfter: 2, Enabled: true,
 	}
 	if err := db.SaveBot(ctx, bot); err != nil {

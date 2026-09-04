@@ -71,11 +71,33 @@ One tag on your page:
 <script src="https://hark.example.com/widget/hark.js" data-bot="shop" defer></script>
 ```
 
-10 KB, no dependencies, markup inside a shadow root so neither side's CSS leaks. Streams the answer over SSE, picks up manager replies by polling, follows the colour and corner you set, and has its own light and dark themes.
+10 KB, no dependencies, markup inside a shadow root so neither side's CSS leaks. Streams the answer over SSE and picks up manager replies by polling.
+
+Every part of the widget is optional. Fill in nothing and you get a bare feed with an input; fill in everything and you get a round launcher, a welcome screen with ready-made questions, and a footnote linking to your privacy page.
 
 ![The widget on someone else's site](screenshots/05-widget.png)
 
 Origins are restricted per bot. An empty list means any site.
+
+## Appearance
+
+Font, spacing, colours and background live on the Appearance tab: a font list including "same as the site", type size and leading, three densities, panel dimensions, corner radii, shadow or hairline border, the palette, and a feed background as a solid colour, gradient, dots, grid or image. Five presets set everything at once.
+
+![Appearance studio](screenshots/10-widget-studio.png)
+
+You set three colours and the rest follow: muted text, hairlines and the bot bubble are derived from the surface and the text colour, and the label on a filled button is picked by contrast. Clearing the "auto" box takes a colour back under manual control.
+
+Theme values land directly in the widget's CSS, so they are cleaned in one place: a colour must be a six-digit code, a URL must be `https`, numbers are clamped, and unknown options fall back to the default.
+
+The frame on the right runs the widget itself rather than a mock-up. It loads the same file and the same settings endpoint the site gets, so it has no way to drift from the live thing.
+
+## Connections
+
+Your own API and your database live on the Connections tab, which is also what opens first when you enter a bot. You pick the kind before the form, with two buttons, so no irrelevant fields are ever on screen.
+
+![Connections](screenshots/08-connections.png)
+
+The Check button calls the connection for real and shows what came back. A typo in a connection string surfaces here rather than mid-conversation with a visitor.
 
 ## Install
 

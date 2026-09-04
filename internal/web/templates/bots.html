@@ -1,7 +1,18 @@
 {{template "head" .}}
-<h1>Боты</h1>
-<p class="lede">Один бот — один сайт или раздел. Модель и поставщик у каждого свои.</p>
 
+<div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:26px">
+  <div>
+    <h1>Боты</h1>
+    <p class="lede" style="margin:0">Один бот — один сайт или раздел. У каждого свои подключения, модель и внешность.</p>
+  </div>
+  {{if .Bots}}
+  <form method="post" action="/bots" style="margin-left:auto">
+    <button class="btn" type="submit">Новый бот</button>
+  </form>
+  {{end}}
+</div>
+
+{{if .Bots}}
 <div class="grid grid--2">
 {{range .Bots}}
   <div class="card">
@@ -11,10 +22,26 @@
     </div>
     <p class="muted mono" style="margin:0 0 12px">{{.Provider}} · {{.Model}}</p>
     <p style="color:var(--t2);margin:0 0 16px">{{trimTo 140 .Instructions}}</p>
-    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}">Настроить</a>
+    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/connections">Подключения</a>
+    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/answers">Как отвечает</a>
+    <a class="btn btn--ghost btn--small" href="/bots/{{.ID}}/widget">Внешность</a>
   </div>
-{{else}}
-  <div class="empty">Ботов пока нет.</div>
 {{end}}
 </div>
+{{else}}
+{{/* Пустое состояние — единственный экран, который видит человек сразу после
+     установки. Текстом тут не отделаться: нужна кнопка, иначе продукт
+     упирается в тупик на первом же шаге. */}}
+<div class="card" style="text-align:center;padding:44px 24px">
+  <h2 style="margin:0 0 8px">Здесь пока пусто</h2>
+  <p class="lede" style="max-width:440px;margin:0 auto 22px">
+    Заведите первого бота: дальше можно написать инструкции, подключить свой API
+    или базу данных и поставить виджет на сайт.
+  </p>
+  <form method="post" action="/bots">
+    <button class="btn" type="submit">Завести бота</button>
+  </form>
+</div>
+{{end}}
+
 {{template "foot" .}}

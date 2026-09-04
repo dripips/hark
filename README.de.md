@@ -71,11 +71,33 @@ Ein Tag auf der Seite:
 <script src="https://hark.example.com/widget/hark.js" data-bot="shop" defer></script>
 ```
 
-10 KB, ohne Abhängigkeiten, das Markup in einem Shadow Root — CSS läuft in keine Richtung aus. Die Antwort kommt als Strom über SSE, Antworten der Betreuung werden per Abfrage nachgeholt, Farbe und Ecke stammen aus den Einstellungen, helles und dunkles Thema bringt es selbst mit.
+10 KB, ohne Abhängigkeiten, das Markup in einem Shadow Root — CSS läuft in keine Richtung aus. Die Antwort kommt als Strom über SSE, Antworten der Betreuung werden per Abfrage nachgeholt.
+
+Jeder Teil des Widgets ist optional. Füllt man nichts aus, bleibt ein nackter Verlauf mit Eingabefeld; füllt man alles aus, bekommt man einen runden Starter, einen Begrüßungsschirm mit vorbereiteten Fragen und eine Fußnote mit Link zur Datenschutzseite.
 
 ![Das Widget auf einer fremden Seite](screenshots/05-widget.png)
 
 Die erlaubten Domains werden je Bot festgelegt. Eine leere Liste heißt: jede Seite.
+
+## Aussehen
+
+Schrift, Abstände, Farben und Hintergrund stehen im Reiter „Aussehen“: eine Schriftauswahl samt „wie auf der Seite“, Schriftgrad und Zeilenabstand, drei Dichten, Fenstermaße, Rundungen, Schatten oder Haarlinie, die Palette und ein Verlaufshintergrund als Fläche, Verlauf, Punkte, Raster oder Bild. Fünf Vorlagen setzen alles auf einmal.
+
+![Werkstatt für das Aussehen](screenshots/10-widget-studio.png)
+
+Drei Farben werden gesetzt, der Rest folgt: gedämpfter Text, Haarlinien und die Blase des Bots werden aus Fläche und Textfarbe berechnet, die Beschriftung auf einer Füllung nach Kontrast. Wer das Häkchen „auto“ entfernt, übernimmt die Farbe selbst.
+
+Werte des Themas landen direkt im CSS des Widgets und werden deshalb an einer Stelle geprüft: eine Farbe muss ein sechsstelliger Code sein, eine Adresse `https`, Zahlen werden begrenzt, unbekannte Varianten fallen auf die Vorgabe zurück.
+
+Im Rahmen rechts läuft das Widget selbst, kein Entwurf — dieselbe Datei und derselbe Endpunkt für die Einstellungen, die auch die Seite bekommt. Auseinanderlaufen kann da nichts.
+
+## Anbindungen
+
+Eigene API und Datenbank liegen im Reiter „Anbindungen“, der auch als Erstes aufgeht, wenn man einen Bot öffnet. Die Art wird vor dem Formular gewählt, mit zwei Schaltflächen, damit nie überflüssige Felder auf dem Schirm stehen.
+
+![Anbindungen](screenshots/08-connections.png)
+
+Die Schaltfläche „Prüfen“ ruft die Anbindung wirklich auf und zeigt, was zurückkam. Ein Tippfehler in der Verbindungszeichenfolge fällt hier auf und nicht mitten im Gespräch mit einem Besucher.
 
 ## Installation
 

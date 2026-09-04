@@ -46,6 +46,11 @@
 
 * { box-sizing: border-box; }
 
+/* Вес нужен: .row и .swatch задают display, а у селектора класса и у [hidden]
+   одинаковая специфичность — побеждает тот, кто ниже в файле. Без этого поля
+   «своего шрифта» видны при любом выбранном наборе. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--bg);
@@ -301,3 +306,160 @@ tr:last-child td { border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   .btn:hover { transform: none; }
 }
+
+/* ── Страница бота: шапка и вкладки ──────────────────────────────────── */
+
+.bothead { margin-bottom: 26px; }
+.bothead__row { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.bothead h1 { margin: 2px 0 0; }
+.bothead .lede { margin: 4px 0 0; display: flex; align-items: center; gap: 10px; }
+
+.bothead__back {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--t3);
+}
+.bothead__back::before { content: "← "; }
+
+/* Вкладка — отдельный адрес, а не якорь: подключения перестали быть подвалом
+   длинной формы, куда никто не долистывал. */
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-top: 20px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tabs__item {
+  padding: 10px 14px;
+  color: var(--t2);
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.2s var(--spring), border-color 0.2s var(--spring);
+}
+.tabs__item:hover { color: var(--t1); text-decoration: none; }
+.tabs__item.is-on { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Подключения ─────────────────────────────────────────────────────── */
+
+/* Вид выбирается двумя карточками до того, как человек увидит поля: в одной
+   форме на оба вида половина полей всегда была лишней. */
+.picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.picker__card {
+  display: block;
+  padding: 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--t1);
+  transition: border-color 0.2s var(--spring), transform 0.2s var(--spring);
+}
+.picker__card:hover {
+  border-color: var(--accent-line);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+.picker__card b { display: block; margin-bottom: 6px; }
+.picker__card span { color: var(--t2); font-size: 13.5px; }
+
+.conn { margin-bottom: 14px; }
+.conn__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.conn__name { font-size: 15px; color: var(--accent); }
+.conn__actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.conn__desc { color: var(--t2); margin: 0 0 8px; }
+
+.notice {
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  background: var(--card);
+}
+.notice--ok { border-color: var(--accent-line); background: var(--accent-soft); }
+.notice--bad { border-color: var(--danger); }
+
+.formbar { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+
+/* Кнопка сохранения не должна уезжать под сгиб: на странице внешности форма
+   длинная, а править цвета хочется по одному. */
+.formbar--sticky {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 0;
+  background: linear-gradient(to top, var(--bg) 68%, transparent);
+}
+
+/* ── Мастерская внешности ────────────────────────────────────────────── */
+
+.studio { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 26px; align-items: start; }
+.studio__stick { position: sticky; top: 24px; }
+.studio__label { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.studio__label .field__hint { margin: 0; }
+
+.studio__frame {
+  width: 100%;
+  height: 620px;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--card);
+  display: block;
+}
+
+.presets { display: flex; gap: 8px; flex-wrap: wrap; }
+.preset {
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--t1);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.2s var(--spring), color 0.2s var(--spring);
+}
+.preset:hover { border-color: var(--accent-line); color: var(--accent); }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.swatch { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--t2); }
+.swatch span { flex: 1; min-width: 0; }
+.swatch input[type="color"] {
+  flex: none;
+  width: 38px;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.field output { color: var(--t3); font-size: 12.5px; font-weight: 400; }
+.field input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+@media (max-width: 960px) {
+  .studio { grid-template-columns: minmax(0, 1fr); }
+  .studio__stick { position: static; }
+  .studio__frame { height: 520px; }
+  .picker { grid-template-columns: minmax(0, 1fr); }
+  .conn__actions { margin-left: 0; }
+}
+
+.tune { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+.tune > summary { cursor: pointer; color: var(--t2); font-size: 13.5px; list-style: none; }
+.tune > summary::-webkit-details-marker { display: none; }
+.tune > summary::before { content: "▸ "; color: var(--t3); }
+.tune[open] > summary::before { content: "▾ "; }
+.tune > summary:hover { color: var(--t1); }
+
+.swatch__auto { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--t3); }
+.swatch__auto input { width: auto; margin: 0; }
+.swatch input[type="color"]:disabled { opacity: 0.4; cursor: not-allowed; }

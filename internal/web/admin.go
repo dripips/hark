@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,7 +12,6 @@ import (
 	"github.com/dripips/hark/internal/chat"
 	"github.com/dripips/hark/internal/llm"
 	"github.com/dripips/hark/internal/store"
-	"github.com/dripips/hark/internal/tools"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -34,57 +34,69 @@ func (s *Server) botList(w http.ResponseWriter, r *http.Request) {
 	s.render(w, r, "bots.html", map[string]any{"Title": "Боты", "Bots": bots})
 }
 
-func (s *Server) botEdit(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	bot, err := s.DB.BotByID(r.Context(), id)
-	if err != nil {
-		http.NotFound(w, r)
-		return
+// botCreate заводит бота с рабочими значениями по умолчанию.
+//
+// Без этого продукт на чистой установке недостижим: инструменты живут внутри
+// бота, а бота завести было нечем — только список и надпись «Ботов пока нет».
+func (s *Server) botCreate(w http.ResponseWriter, r *http.Request) {
+	name := strings.TrimSpace(r.FormValue("name"))
+	if name == "" {
+		name = "Новый бот"
 	}
-	toolRows, _ := s.DB.Tools(r.Context(), bot.ID)
-
-	s.render(w, r, "bot.html", map[string]any{
-		"Title": bot.Name, "Bot": bot, "Tools": toolRows,
-		"Caps": bot.Caps(), "Probed": bot.Capabilities != "" && bot.Capabilities != "{}",
-	})
-}
-
-func (s *Server) botSave(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	bot, err := s.DB.BotByID(r.Context(), id)
-	if err != nil {
-		http.NotFound(w, r)
-		return
+	slug := slugify(r.FormValue("slug"))
+	if slug == "" {
+		slug = slugify(name)
+	}
+	if slug == "" {
+		slug = "bot"
 	}
 
-	bot.Name = r.FormValue("name")
-	bot.Instructions = r.FormValue("instructions")
-	bot.Greeting = r.FormValue("greeting")
-	bot.Provider = r.FormValue("provider")
-	bot.BaseURL = strings.TrimSpace(r.FormValue("base_url"))
-	bot.Model = strings.TrimSpace(r.FormValue("model"))
-	if key := strings.TrimSpace(r.FormValue("api_key")); key != "" {
-		// Пустое поле означает «не меняли»: иначе ключ стирался бы при каждом
-		// сохранении формы, где его не показывают.
-		bot.APIKey = key
+	// Слаг попадает в тег script на чужом сайте, поэтому он должен быть
+	// единственным; при совпадении просто дописываем число.
+	base := slug
+	for attempt := 2; attempt < 100; attempt++ {
+		if _, err := s.DB.BotBySlug(r.Context(), slug); err != nil {
+			break
+		}
+		slug = fmt.Sprintf("%s-%d", base, attempt)
 	}
-	bot.MaxTokens = atoiDefault(r.FormValue("max_tokens"), 1200)
-	bot.Temperature = strings.TrimSpace(r.FormValue("temperature"))
-	bot.Reasoning = r.FormValue("reasoning")
-	bot.PriceIn = int64(atoiDefault(r.FormValue("price_in"), 0))
-	bot.PriceOut = int64(atoiDefault(r.FormValue("price_out"), 0))
-	bot.Accent = r.FormValue("accent")
-	bot.Position = r.FormValue("position")
-	bot.LauncherText = r.FormValue("launcher_text")
-	bot.AllowedOrigins = r.FormValue("allowed_origins")
-	bot.EscalateAfter = atoiDefault(r.FormValue("escalate_after"), 2)
-	bot.Enabled = r.FormValue("enabled") == "on"
 
+	bot := &store.Bot{
+		Slug: slug, Name: name,
+		Instructions:  "Отвечай коротко и по делу. Данные бери из инструментов, не выдумывай.",
+		Greeting:      "Здравствуйте! Чем помочь?",
+		Provider:      "openai",
+		Model:         "gpt-5-nano",
+		MaxTokens:     1200,
+		Accent:        store.DefaultAccent,
+		Position:      "right",
+		LauncherText:  "Спросить",
+		LauncherStyle: "pill",
+		CornerRadius:  18,
+		EscalateAfter: 2,
+		Enabled:       true,
+	}
 	if err := s.DB.SaveBot(r.Context(), bot); err != nil {
-		http.Error(w, "не удалось сохранить: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "не удалось создать бота: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/bots/"+strconv.FormatInt(bot.ID, 10), http.StatusSeeOther)
+}
+
+// slugify оставляет то, что можно писать в адресе и в атрибуте data-bot.
+func slugify(raw string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(strings.TrimSpace(raw)) {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			b.WriteRune(r)
+		case r == ' ' || r == '_' || r == '-':
+			if b.Len() > 0 && !strings.HasSuffix(b.String(), "-") {
+				b.WriteRune('-')
+			}
+		}
+	}
+	return strings.Trim(b.String(), "-")
 }
 
 // botProbe спрашивает у модели, что она принимает. Кнопкой, а не при каждом
@@ -115,52 +127,6 @@ func (s *Server) botProbe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/bots/"+strconv.FormatInt(bot.ID, 10), http.StatusSeeOther)
-}
-
-func (s *Server) toolSave(w http.ResponseWriter, r *http.Request) {
-	botID, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	toolID, _ := strconv.ParseInt(r.FormValue("id"), 10, 64)
-
-	tool := &store.Tool{
-		ID: toolID, BotID: botID,
-		Kind:          r.FormValue("kind"),
-		Name:          strings.TrimSpace(r.FormValue("name")),
-		Description:   r.FormValue("description"),
-		Parameters:    r.FormValue("parameters"),
-		Method:        r.FormValue("method"),
-		URL:           strings.TrimSpace(r.FormValue("url")),
-		Headers:       r.FormValue("headers"),
-		DSN:           strings.TrimSpace(r.FormValue("dsn")),
-		Driver:        r.FormValue("driver"),
-		AllowedTables: r.FormValue("allowed_tables"),
-		RowLimit:      atoiDefault(r.FormValue("row_limit"), 50),
-		TimeoutMS:     atoiDefault(r.FormValue("timeout_ms"), 5000),
-		Enabled:       r.FormValue("enabled") == "on",
-	}
-	if tool.Kind == "sql" && strings.TrimSpace(tool.Parameters) == "" {
-		// У SQL-инструмента схема всегда одна: модель пишет запрос.
-		schema, _ := json.Marshal(tools.QuerySchema())
-		tool.Parameters = string(schema)
-	}
-	if tool.Headers == "" {
-		tool.Headers = "{}"
-	}
-	if tool.Parameters == "" {
-		tool.Parameters = "{}"
-	}
-
-	if err := s.DB.SaveTool(r.Context(), tool); err != nil {
-		http.Error(w, "не удалось сохранить инструмент: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	http.Redirect(w, r, "/bots/"+strconv.FormatInt(botID, 10)+"#tools", http.StatusSeeOther)
-}
-
-func (s *Server) toolDelete(w http.ResponseWriter, r *http.Request) {
-	botID, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	toolID, _ := strconv.ParseInt(chi.URLParam(r, "toolID"), 10, 64)
-	_ = s.DB.DeleteTool(r.Context(), botID, toolID)
-	http.Redirect(w, r, "/bots/"+strconv.FormatInt(botID, 10)+"#tools", http.StatusSeeOther)
 }
 
 func (s *Server) inbox(w http.ResponseWriter, r *http.Request) {

@@ -1,0 +1,36 @@
+{{define "preview"}}<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Предпросмотр</title>
+<style>
+  /* Условная чужая страница: несколько полос текста, чтобы виджет было видно
+     на фоне, а не в пустоте. */
+  html,body{height:100%}
+  body{margin:0;background:#eef0f4;font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .page{padding:26px 22px}
+  .bar{height:9px;border-radius:999px;background:#dfe3ea;margin-bottom:11px}
+  .bar:nth-child(2){width:62%}
+  .bar:nth-child(4){width:78%}
+  .bar:nth-child(6){width:45%}
+  .bar--tall{height:132px;border-radius:12px;margin:18px 0}
+  @media (prefers-color-scheme:dark){
+    body{background:#1a1c21}.bar{background:#262a31}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="bar" style="width:38%;height:14px"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar bar--tall"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+</div>
+<script src="/widget/hark.js" data-bot="{{.Slug}}" data-preview="{{.Query}}" data-demo="1"></script>
+</body>
+</html>
+{{end}}

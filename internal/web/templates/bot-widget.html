@@ -1,0 +1,457 @@
+{{template "head" .}}
+{{template "bothead" .}}
+
+{{$d := .Bot.Design}}{{$set := .Set}}
+
+<div class="studio">
+  <form class="studio__form" method="post" action="/bots/{{.Bot.ID}}/widget" id="design">
+    {{/* Всю тему собирает браузер в это поле: сервер хранит её одним JSON и
+         сам разбирает в Design. Так предпросмотр справа и виджет на сайте
+         считают одни и те же значения, без второй копии правил. */}}
+    <input type="hidden" name="theme" id="theme">
+
+    <div class="card">
+      <h2 style="margin-top:0">Готовые наборы</h2>
+      <p class="field__hint" style="margin:0 0 14px">Ставит все ручки разом. Дальше правьте что угодно.</p>
+      <div class="presets">
+        <button class="preset" type="button" data-preset="clean">Чистый</button>
+        <button class="preset" type="button" data-preset="night">Ночь</button>
+        <button class="preset" type="button" data-preset="paper">Бумага</button>
+        <button class="preset" type="button" data-preset="soft">Мягкий</button>
+        <button class="preset" type="button" data-preset="terminal">Терминал</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Кнопка на сайте</h2>
+      <div class="row">
+        <div class="field">
+          <label for="launcher_style">Вид</label>
+          <select id="launcher_style" name="launcher_style">
+            <option value="pill" {{if eq .Bot.LauncherStyle "pill"}}selected{{end}}>с подписью</option>
+            <option value="round" {{if eq .Bot.LauncherStyle "round"}}selected{{end}}>круглая</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="position">Угол</label>
+          <select id="position" name="position">
+            <option value="right" {{if eq .Bot.Position "right"}}selected{{end}}>справа</option>
+            <option value="left" {{if eq .Bot.Position "left"}}selected{{end}}>слева</option>
+          </select>
+        </div>
+        <div class="field" style="max-width:120px">
+          <label for="avatar_emoji">Значок</label>
+          <input id="avatar_emoji" type="text" name="avatar_emoji" value="{{.Bot.AvatarEmoji}}" maxlength="4" placeholder="🙂">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="launcher_text">Надпись</label>
+          <input id="launcher_text" type="text" name="launcher_text" value="{{.Bot.LauncherText}}" placeholder="Спросить">
+        </div>
+        <div class="field">
+          <label for="offset">Отступ от края <output>{{$d.Offset}}px</output></label>
+          <input id="offset" type="range" name="offset" data-theme="offset"
+                 value="{{$d.Offset}}" min="8" max="48" step="2" data-unit="px">
+          <div class="field__hint">Чтобы кнопка не налезала на плашку о куки или корзину.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Шрифт</h2>
+      <div class="field">
+        <label for="font">Набор</label>
+        <select id="font" name="font" data-theme="font">
+          <option value="system" {{if eq $d.Font "system"}}selected{{end}}>Системный</option>
+          <option value="inherit" {{if eq $d.Font "inherit"}}selected{{end}}>Как на сайте</option>
+          <option value="inter" {{if eq $d.Font "inter"}}selected{{end}}>Inter</option>
+          <option value="geometric" {{if eq $d.Font "geometric"}}selected{{end}}>Геометрический гротеск</option>
+          <option value="rounded" {{if eq $d.Font "rounded"}}selected{{end}}>Скруглённый</option>
+          <option value="serif" {{if eq $d.Font "serif"}}selected{{end}}>С засечками</option>
+          <option value="mono" {{if eq $d.Font "mono"}}selected{{end}}>Моноширинный</option>
+          <option value="custom" {{if eq $d.Font "custom"}}selected{{end}}>Свой</option>
+        </select>
+        <div class="field__hint">
+          «Как на сайте» берёт шрифт страницы, куда поставлен виджет: ничего не грузится,
+          и вставка не выглядит чужой.
+        </div>
+      </div>
+      <div class="row" data-when-font="custom">
+        <div class="field">
+          <label for="font_stack">Название шрифта</label>
+          <input id="font_stack" type="text" name="font_stack" data-theme="font_stack" value="{{$d.FontStack}}"
+                 placeholder="Manrope">
+          <div class="field__hint">Если он уже подключён на самом сайте, этого достаточно.</div>
+        </div>
+        <div class="field">
+          <label for="font_url">Ссылка на CSS шрифта</label>
+          <input id="font_url" type="text" name="font_url" data-theme="font_url" value="{{$d.FontURL}}"
+                 placeholder="https://fonts.googleapis.com/css2?family=...">
+          <div class="field__hint">Запрос на чужой домен с чужой страницы: его может не пустить сайт. Только https.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="font_size">Кегль <output>{{$d.FontSize}}px</output></label>
+          <input id="font_size" type="range" name="font_size" data-theme="font_size"
+                 value="{{$d.FontSize}}" min="13" max="19" step="1" data-unit="px">
+        </div>
+        <div class="field">
+          <label for="line_height">Межстрочный <output>{{$d.LineHeight}}</output></label>
+          <input id="line_height" type="range" name="line_height" data-theme="line_height"
+                 value="{{$d.LineHeight}}" min="1.25" max="1.8" step="0.05">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Отступы и размер</h2>
+      <div class="field">
+        <label for="density">Плотность</label>
+        <select id="density" name="density" data-theme="density">
+          <option value="compact" {{if eq $d.Density "compact"}}selected{{end}}>Плотно</option>
+          <option value="normal" {{if eq $d.Density "normal"}}selected{{end}}>Обычно</option>
+          <option value="roomy" {{if eq $d.Density "roomy"}}selected{{end}}>Просторно</option>
+        </select>
+        <div class="field__hint">Двигает сразу все отступы: они считаются от одного шага сетки.</div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="width">Ширина <output>{{$d.Width}}px</output></label>
+          <input id="width" type="range" name="width" data-theme="width"
+                 value="{{$d.Width}}" min="320" max="460" step="4" data-unit="px">
+        </div>
+        <div class="field">
+          <label for="height">Высота <output>{{$d.Height}}px</output></label>
+          <input id="height" type="range" name="height" data-theme="height"
+                 value="{{$d.Height}}" min="420" max="680" step="10" data-unit="px">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="radius">Скругление окна <output>{{$d.Radius}}px</output></label>
+          <input id="radius" type="range" name="radius" data-theme="radius"
+                 value="{{$d.Radius}}" min="0" max="28" step="1" data-unit="px">
+        </div>
+        <div class="field">
+          <label for="bubble">Скругление реплик <output>{{$d.Bubble}}px</output></label>
+          <input id="bubble" type="range" name="bubble" data-theme="bubble"
+                 value="{{$d.Bubble}}" min="0" max="22" step="1" data-unit="px">
+        </div>
+      </div>
+      <div class="field">
+        <label for="shadow">Тень</label>
+        <select id="shadow" name="shadow" data-theme="shadow">
+          <option value="none" {{if eq $d.Shadow "none"}}selected{{end}}>Без тени, с рамкой</option>
+          <option value="soft" {{if eq $d.Shadow "soft"}}selected{{end}}>Мягкая</option>
+          <option value="deep" {{if eq $d.Shadow "deep"}}selected{{end}}>Глубокая</option>
+        </select>
+        <div class="field__hint">Без тени панель теряла бы край, поэтому вместо неё появляется волосяная линия.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Цвета</h2>
+      <div class="field">
+        <label for="scheme">Схема</label>
+        <select id="scheme" name="scheme" data-theme="scheme">
+          <option value="light" {{if eq $d.Scheme "light"}}selected{{end}}>Светлая всегда</option>
+          <option value="dark" {{if eq $d.Scheme "dark"}}selected{{end}}>Тёмная всегда</option>
+          <option value="auto" {{if eq $d.Scheme "auto"}}selected{{end}}>Как на устройстве</option>
+        </select>
+      </div>
+
+      {{/* Три цвета решают всё остальное: приглушённый текст, линии и фон
+           реплики бота выводятся из полотна и текста. Поэтому они наверху,
+           а производные — ниже, под галочкой. */}}
+      <div class="swatches">
+        <label class="swatch"><span>Основной</span>
+          <input type="color" name="accent" data-theme="accent" value="{{$d.Accent}}"></label>
+        <label class="swatch"><span>Полотно</span>
+          <input type="color" name="surface" data-theme="surface" value="{{$d.Surface}}"></label>
+        <label class="swatch"><span>Текст</span>
+          <input type="color" name="text" data-theme="text" value="{{$d.Text}}"></label>
+      </div>
+
+      <details class="tune" {{if or (index $set "muted") (index $set "bot_bubble") (index $set "user_bubble")}}open{{end}}>
+        <summary>Остальные цвета</summary>
+        <p class="field__hint" style="margin:10px 0 14px">
+          Пока стоит «авто», они пересчитываются при смене полотна и текста. Снимите галочку, чтобы задать своё.
+        </p>
+        <div class="swatches">
+          {{/* auto — не украшение: с явным значением цвет замирает и перестаёт
+               следовать за полотном, и тёмный фон получает светлые линии. */}}
+          <div class="swatch"><span>Текст на основном</span>
+            <input type="color" name="on_accent" data-theme="on_accent" value="{{$d.OnAccent}}">
+            <label class="swatch__auto"><input type="checkbox" data-auto="on_accent" {{if not (index $set "on_accent")}}checked{{end}}> авто</label></div>
+          <div class="swatch"><span>Приглушённый</span>
+            <input type="color" name="muted" data-theme="muted" value="{{$d.Muted}}">
+            <label class="swatch__auto"><input type="checkbox" data-auto="muted" {{if not (index $set "muted")}}checked{{end}}> авто</label></div>
+          <div class="swatch"><span>Линии</span>
+            <input type="color" name="border" data-theme="border" value="{{$d.Border}}">
+            <label class="swatch__auto"><input type="checkbox" data-auto="border" {{if not (index $set "border")}}checked{{end}}> авто</label></div>
+          <div class="swatch"><span>Реплика бота</span>
+            <input type="color" name="bot_bubble" data-theme="bot_bubble" value="{{$d.BotBubble}}">
+            <label class="swatch__auto"><input type="checkbox" data-auto="bot_bubble" {{if not (index $set "bot_bubble")}}checked{{end}}> авто</label></div>
+          <div class="swatch"><span>Текст бота</span>
+            <input type="color" name="bot_text" data-theme="bot_text" value="{{$d.BotText}}">
+            <label class="swatch__auto"><input type="checkbox" data-auto="bot_text" {{if not (index $set "bot_text")}}checked{{end}}> авто</label></div>
+          <div class="swatch"><span>Реплика гостя</span>
+            <input type="color" name="user_bubble" data-theme="user_bubble" value="{{$d.UserBubble}}">
+            <label class="swatch__auto"><input type="checkbox" data-auto="user_bubble" {{if not (index $set "user_bubble")}}checked{{end}}> авто</label></div>
+          <div class="swatch"><span>Текст гостя</span>
+            <input type="color" name="user_text" data-theme="user_text" value="{{$d.UserText}}">
+            <label class="swatch__auto"><input type="checkbox" data-auto="user_text" {{if not (index $set "user_text")}}checked{{end}}> авто</label></div>
+        </div>
+      </details>
+
+      <div data-when-scheme="auto" style="margin-top:18px">
+        <h3 style="margin:0 0 4px;font-size:14px">Когда у посетителя тёмная система</h3>
+        <p class="field__hint" style="margin:0 0 12px">
+          Выводить тёмные цвета из светлых — гадание: бежевая панель превращается в чужую серую.
+          Поэтому три цвета задаются, остальные считаются от них.
+        </p>
+        <div class="swatches">
+          <label class="swatch"><span>Полотно</span>
+            <input type="color" name="dark_surface" data-theme="dark_surface" value="{{$d.DarkSurface}}"></label>
+          <label class="swatch"><span>Текст</span>
+            <input type="color" name="dark_text" data-theme="dark_text" value="{{$d.DarkText}}"></label>
+          <label class="swatch"><span>Фон ленты</span>
+            <input type="color" name="dark_backdrop" data-theme="dark_backdrop" value="{{$d.DarkBackdrop}}"></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Фон ленты</h2>
+      <div class="field">
+        <label for="backdrop_kind">Чем залить</label>
+        <select id="backdrop_kind" name="backdrop_kind" data-theme="backdrop_kind">
+          <option value="solid" {{if eq $d.BackdropKind "solid"}}selected{{end}}>Сплошной цвет</option>
+          <option value="gradient" {{if eq $d.BackdropKind "gradient"}}selected{{end}}>Градиент</option>
+          <option value="dots" {{if eq $d.BackdropKind "dots"}}selected{{end}}>Точки</option>
+          <option value="grid" {{if eq $d.BackdropKind "grid"}}selected{{end}}>Сетка</option>
+          <option value="image" {{if eq $d.BackdropKind "image"}}selected{{end}}>Картинка</option>
+        </select>
+      </div>
+      <div class="swatches">
+        <label class="swatch"><span>Основной</span>
+          <input type="color" name="backdrop_from" data-theme="backdrop_from" value="{{$d.BackdropFrom}}"></label>
+        <label class="swatch" data-when-backdrop="gradient"><span>Второй</span>
+          <input type="color" name="backdrop_to" data-theme="backdrop_to" value="{{$d.BackdropTo}}"></label>
+      </div>
+      <div class="field" data-when-backdrop="gradient" style="margin-top:14px">
+        <label for="backdrop_angle">Угол <output>{{$d.BackdropAngle}}°</output></label>
+        <input id="backdrop_angle" type="range" name="backdrop_angle" data-theme="backdrop_angle"
+               value="{{$d.BackdropAngle}}" min="0" max="360" step="5" data-unit="°">
+      </div>
+      <div class="field" data-when-backdrop="image" style="margin-top:14px">
+        <label for="backdrop_image">Адрес картинки</label>
+        <input id="backdrop_image" type="text" name="backdrop_image" data-theme="backdrop_image"
+               value="{{$d.BackdropImage}}" placeholder="https://example.com/pattern.png">
+        <div class="field__hint">
+          Только https. Поверх картинки ложится пелена цвета полотна: без неё реплики
+          читаются ровно до первого светлого пятна.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Шапка</h2>
+      <div class="row">
+        <div class="field">
+          <label for="header_kind">Заливка</label>
+          <select id="header_kind" name="header_kind" data-theme="header_kind">
+            <option value="accent" {{if eq $d.HeaderKind "accent"}}selected{{end}}>Основным цветом</option>
+            <option value="gradient" {{if eq $d.HeaderKind "gradient"}}selected{{end}}>Градиентом</option>
+            <option value="surface" {{if eq $d.HeaderKind "surface"}}selected{{end}}>Цветом полотна</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="subtitle">Подпись под названием</label>
+          <input id="subtitle" type="text" name="subtitle" data-theme="subtitle" value="{{$d.Subtitle}}"
+                 maxlength="80" placeholder="Отвечаем круглосуточно">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Приветствие</h2>
+      <div class="field">
+        <label for="welcome_title">Заголовок</label>
+        <input id="welcome_title" type="text" name="welcome_title" value="{{.Bot.WelcomeTitle}}" placeholder="Чем помочь?">
+        <div class="field__hint">Пусто во всех трёх полях — приветственного экрана не будет вовсе.</div>
+      </div>
+      <div class="field">
+        <label for="welcome_text">Текст</label>
+        <input id="welcome_text" type="text" name="welcome_text" value="{{.Bot.WelcomeText}}">
+      </div>
+      <div class="field">
+        <label for="quick_replies">Готовые вопросы</label>
+        <textarea id="quick_replies" name="quick_replies" style="min-height:90px"
+                  placeholder="Где мой заказ?&#10;Как вернуть товар?">{{.Bot.QuickReplies}}</textarea>
+        <div class="field__hint">По одному в строке. Посетителю не придётся ничего печатать.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Сноска и домены</h2>
+      <div class="field">
+        <label for="disclaimer">Оговорка под полем ввода</label>
+        <input id="disclaimer" type="text" name="disclaimer" value="{{.Bot.Disclaimer}}"
+               placeholder="Отвечает бот. Проверяйте важное.">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="privacy_url">Ссылка на политику</label>
+          <input id="privacy_url" type="text" name="privacy_url" value="{{.Bot.PrivacyURL}}" placeholder="https://example.com/privacy">
+        </div>
+        <div class="field">
+          <label for="privacy_label">Подпись ссылки</label>
+          <input id="privacy_label" type="text" name="privacy_label" value="{{.Bot.PrivacyLabel}}" placeholder="Политика данных">
+        </div>
+      </div>
+      <div class="field">
+        <label for="allowed_origins">Домены, где разрешён виджет</label>
+        <textarea id="allowed_origins" name="allowed_origins" style="min-height:70px"
+                  placeholder="https://example.com">{{.Bot.AllowedOrigins}}</textarea>
+        <div class="field__hint">По одному в строке. Пусто — виджет работает на любом сайте.</div>
+      </div>
+    </div>
+
+    <div class="formbar formbar--sticky">
+      <button class="btn" type="submit">Сохранить</button>
+      <span class="field__hint" id="dirty" hidden>Справа показано несохранённое.</span>
+    </div>
+  </form>
+
+  <aside class="studio__side">
+    <div class="studio__stick">
+      <div class="studio__label">
+        <b>Предпросмотр</b>
+        <span class="field__hint">Настоящий виджет, тот же код</span>
+      </div>
+      {{/* Внутри рамки крутится не макет, а сам hark.js, и настройки он берёт
+           через тот же обработчик, что и на сайте. Поэтому «сохранил — стало
+           иначе» тут случиться не может. */}}
+      <iframe class="studio__frame" id="preview" title="Предпросмотр виджета"
+              src="/bots/{{.Bot.ID}}/widget/preview"></iframe>
+
+      <div class="field" style="margin-top:18px">
+        <label>Как поставить</label>
+        <div class="io">{{.Installed}}</div>
+        <div class="field__hint">Один тег перед &lt;/body&gt;. Больше ничего не нужно.</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function () {
+  var form = document.getElementById('design');
+  var field = document.getElementById('theme');
+  var frame = document.getElementById('preview');
+  var dirty = document.getElementById('dirty');
+  var base = frame.getAttribute('src');
+
+  /* Тему собирает браузер, а считает её сервер: сюда уходят только значения
+     ручек, без единого правила CSS. Числовые поля отдают число, чтобы на той
+     стороне не гадать, «18» это размер или строка. */
+  function theme() {
+    var out = {};
+    form.querySelectorAll('[data-theme]').forEach(function (el) {
+      var key = el.getAttribute('data-theme');
+      // Цвет на «авто» не отправляется вовсе: пустое значение — это просьба
+      // вывести его из полотна и текста, а не «оставь как было».
+      var auto = form.querySelector('[data-auto="' + key + '"]');
+      if (auto && auto.checked) return;
+      out[key] = (el.type === 'range' || el.type === 'number')
+        ? (el.step && el.step.indexOf('.') >= 0 ? el.value : el.valueAsNumber)
+        : el.value;
+    });
+    return out;
+  }
+
+  function labels() {
+    form.querySelectorAll('input[type=range]').forEach(function (el) {
+      var out = el.parentNode.querySelector('output');
+      if (out) out.textContent = el.value + (el.getAttribute('data-unit') || '');
+    });
+  }
+
+  // Поля, нужные только при одном значении соседнего списка.
+  function toggles() {
+    var pairs = {font: 'data-when-font', backdrop_kind: 'data-when-backdrop', scheme: 'data-when-scheme'};
+    Object.keys(pairs).forEach(function (name) {
+      var value = form.querySelector('[name=' + name + ']').value;
+      form.querySelectorAll('[' + pairs[name] + ']').forEach(function (el) {
+        el.hidden = el.getAttribute(pairs[name]) !== value;
+      });
+    });
+    form.querySelectorAll('[data-auto]').forEach(function (box) {
+      var swatch = form.querySelector('[data-theme="' + box.getAttribute('data-auto') + '"]');
+      if (swatch) swatch.disabled = box.checked;
+    });
+  }
+
+  var timer = null;
+  function refresh() {
+    var json = JSON.stringify(theme());
+    field.value = json;
+    labels();
+    toggles();
+    dirty.hidden = false;
+    clearTimeout(timer);
+    // Перезагрузка рамки заметно дороже движения ползунка, поэтому ждём паузы.
+    timer = setTimeout(function () {
+      frame.src = base + '?theme=' + encodeURIComponent(json) +
+        '&launcher=' + encodeURIComponent(form.querySelector('[name=launcher_style]').value) +
+        '&side=' + encodeURIComponent(form.querySelector('[name=position]').value);
+    }, 260);
+  }
+
+  form.addEventListener('input', refresh);
+  form.addEventListener('change', refresh);
+
+  var PRESETS = {
+    clean: {scheme: 'light', font: 'system', font_size: 15, line_height: '1.5', density: 'normal',
+      radius: 18, bubble: 14, shadow: 'soft', accent: '#2f6df6', surface: '#ffffff', text: '#14161a',
+      backdrop_kind: 'solid', backdrop_from: '#fbfbfd', header_kind: 'accent'},
+    night: {scheme: 'dark', font: 'inter', font_size: 15, line_height: '1.55', density: 'normal',
+      radius: 20, bubble: 16, shadow: 'deep', accent: '#7c5cff', surface: '#16181d', text: '#e8eaf0',
+      backdrop_kind: 'gradient', backdrop_from: '#101216', backdrop_to: '#171a22',
+      backdrop_angle: 160, header_kind: 'gradient'},
+    paper: {scheme: 'light', font: 'serif', font_size: 16, line_height: '1.65', density: 'roomy',
+      radius: 6, bubble: 4, shadow: 'none', accent: '#8a5a2b', surface: '#fffaf3', text: '#2b2318',
+      backdrop_kind: 'solid', backdrop_from: '#fdf8ef', header_kind: 'surface'},
+    soft: {scheme: 'light', font: 'rounded', font_size: 15, line_height: '1.55', density: 'roomy',
+      radius: 26, bubble: 20, shadow: 'soft', accent: '#12a594', surface: '#ffffff', text: '#15302c',
+      backdrop_kind: 'dots', backdrop_from: '#f6fbfa', header_kind: 'accent'},
+    terminal: {scheme: 'dark', font: 'mono', font_size: 14, line_height: '1.5', density: 'compact',
+      radius: 2, bubble: 2, shadow: 'none', accent: '#39d353', surface: '#0d1117', text: '#c9d1d9',
+      backdrop_kind: 'grid', backdrop_from: '#0d1117', header_kind: 'surface'}
+  };
+
+  form.querySelectorAll('[data-preset]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      // Набор задаёт три цвета, остальные возвращаются на «авто»: иначе
+      // приглушённый текст с прошлой темы остался бы поверх нового полотна.
+      form.querySelectorAll('[data-auto]').forEach(function (box) { box.checked = true; });
+      var preset = PRESETS[button.getAttribute('data-preset')];
+      Object.keys(preset).forEach(function (key) {
+        var el = form.querySelector('[data-theme="' + key + '"]');
+        if (el) el.value = preset[key];
+      });
+      refresh();
+    });
+  });
+
+  field.value = JSON.stringify(theme());
+  labels();
+  toggles();
+  dirty.hidden = true;
+})();
+</script>
+
+{{template "foot" .}}

@@ -1,0 +1,124 @@
+{{template "head" .}}
+{{template "bothead" .}}
+
+<div class="card">
+  <h2 style="margin-top:0">
+    {{if .IsNew}}Новое подключение{{else}}{{.Tool.Name}}{{end}}
+    <span class="pill">{{if eq .Tool.Kind "http"}}свой API{{else}}база данных{{end}}</span>
+  </h2>
+
+  {{if .Error}}
+  <div class="notice notice--bad"><b>Не сохранили</b><div style="margin-top:6px">{{.Error}}</div></div>
+  {{end}}
+
+  <form method="post" action="/bots/{{.Bot.ID}}/connections">
+    <input type="hidden" name="kind" value="{{.Tool.Kind}}">
+    <input type="hidden" name="id" value="{{.Tool.ID}}">
+
+    <div class="row">
+      <div class="field">
+        <label for="name">Имя для модели</label>
+        <input id="name" type="text" name="name" value="{{.Tool.Name}}"
+               placeholder="{{if eq .Tool.Kind "http"}}order_status{{else}}shop_query{{end}}" required>
+        <div class="field__hint">Латиницей, без пробелов: модель зовёт его как функцию.</div>
+      </div>
+      <div class="field">
+        <label style="display:flex;gap:8px;align-items:center;margin-top:26px">
+          <input type="checkbox" name="enabled" style="width:auto" {{if or .IsNew .Tool.Enabled}}checked{{end}}>
+          Включено
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="description">Описание</label>
+      <input id="description" type="text" name="description" value="{{.Tool.Description}}"
+             placeholder="{{if eq .Tool.Kind "http"}}Статус заказа по номеру{{else}}Товары, цены и остатки{{end}}" required>
+      <div class="field__hint">
+        Это читает модель, чтобы решить, когда звать подключение.
+        {{if eq .Tool.Kind "sql"}}Перечислите таблицы и колонки: по описанию модель составляет запрос.{{end}}
+      </div>
+    </div>
+
+    {{if eq .Tool.Kind "http"}}
+    <div class="row">
+      <div class="field" style="max-width:140px">
+        <label for="method">Метод</label>
+        <select id="method" name="method">
+          {{$m := .Tool.Method}}
+          <option {{if eq $m "GET"}}selected{{end}}>GET</option>
+          <option {{if eq $m "POST"}}selected{{end}}>POST</option>
+          <option {{if eq $m "PUT"}}selected{{end}}>PUT</option>
+          <option {{if eq $m "DELETE"}}selected{{end}}>DELETE</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="url">Адрес</label>
+        <input id="url" type="text" name="url" value="{{.Tool.URL}}"
+               placeholder="https://api.example.com/orders/{id}" required>
+        <div class="field__hint">Имена в фигурных скобках подставляются из параметров.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="headers">Заголовки, JSON</label>
+      <input id="headers" type="text" name="headers" value="{{.Tool.Headers}}"
+             placeholder='{"Authorization":"Bearer ..."}'>
+    </div>
+    <div class="field">
+      <label for="body_template">Тело запроса</label>
+      <textarea id="body_template" name="body_template" style="min-height:90px"
+                placeholder='{"order":"{id}"}'>{{.Tool.BodyTemplate}}</textarea>
+      <div class="field__hint">Для GET оставьте пустым. Подстановка та же, что в адресе.</div>
+    </div>
+    <div class="field">
+      <label for="parameters">Схема параметров, JSON Schema</label>
+      <textarea id="parameters" name="parameters" style="min-height:90px"
+                placeholder='{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}'>{{.Tool.Parameters}}</textarea>
+      <div class="field__hint">По ней модель понимает, что нужно передать.</div>
+    </div>
+
+    {{else}}
+    <div class="row">
+      <div class="field" style="max-width:180px">
+        <label for="driver">Движок</label>
+        <select id="driver" name="driver">
+          <option value="sqlite" {{if eq .Tool.Driver "sqlite"}}selected{{end}}>SQLite</option>
+          <option value="postgres" {{if eq .Tool.Driver "postgres"}}selected{{end}}>PostgreSQL</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="dsn">Строка подключения</label>
+        <input id="dsn" type="password" name="dsn" autocomplete="off"
+               placeholder="{{if .Tool.DSN}}сохранена, оставьте пустым{{else}}postgres://readonly:...@host/db{{end}}"
+               {{if .IsNew}}required{{end}}>
+        <div class="field__hint">
+          Подключайте пользователем без права записи. Ограничители Hark — вторая линия, а не первая.
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="allowed_tables">Разрешённые таблицы</label>
+      <input id="allowed_tables" type="text" name="allowed_tables" value="{{.Tool.AllowedTables}}"
+             placeholder="orders, products" required>
+      <div class="field__hint">Через запятую. Запрос к таблице не из списка отклоняется.</div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="row_limit">Строк не больше</label>
+        <input id="row_limit" type="number" name="row_limit" value="{{.Tool.RowLimit}}" min="1" max="500">
+      </div>
+      <div class="field">
+        <label for="timeout_ms">Таймаут, мс</label>
+        <input id="timeout_ms" type="number" name="timeout_ms" value="{{.Tool.TimeoutMS}}" min="500" max="60000">
+      </div>
+    </div>
+    {{end}}
+
+    <div class="formbar">
+      <button class="btn" type="submit">Сохранить</button>
+      <a class="btn btn--ghost" href="/bots/{{.Bot.ID}}/connections">Отмена</a>
+    </div>
+  </form>
+</div>
+
+{{template "foot" .}}

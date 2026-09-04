@@ -1,0 +1,109 @@
+{{template "head" .}}
+{{template "bothead" .}}
+
+{{/* Проба — главное отличие от обычного конструктора: ручки показываются
+     только те, которые эта модель приняла. */}}
+<div class="card">
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <h2 style="margin:0">Что умеет модель</h2>
+    <form method="post" action="/bots/{{.Bot.ID}}/probe" style="margin-left:auto">
+      <button class="btn btn--ghost btn--small" type="submit">Проверить модель</button>
+    </form>
+  </div>
+  {{if .Probed}}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0">
+      <span class="pill {{if .Caps.Streaming}}pill--human{{else}}pill--off{{end}}">поток</span>
+      <span class="pill {{if .Caps.Tools}}pill--human{{else}}pill--off{{end}}">подключения</span>
+      <span class="pill {{if .Caps.Temperature}}pill--human{{else}}pill--off{{end}}">температура</span>
+      <span class="pill {{if .Caps.ReasoningEffort}}pill--human{{else}}pill--off{{end}}">усилие рассуждения</span>
+      <span class="pill {{if .Caps.ReportsReasoning}}pill--wait{{else}}pill--off{{end}}">считает рассуждение</span>
+    </div>
+    {{with .Caps.Notes}}
+      <div style="margin-top:12px">
+      {{range .}}<p class="field__hint" style="margin:0 0 4px">{{.}}</p>{{end}}
+      </div>
+    {{end}}
+  {{else}}
+    <p class="field__hint" style="margin:12px 0 0;max-width:62ch">
+      Модель ещё не проверяли. Проба стоит несколько сотен токенов и делается один раз:
+      после неё Hark перестанет слать параметры, которые эта модель отвергает.
+    </p>
+  {{end}}
+</div>
+
+<form method="post" action="/bots/{{.Bot.ID}}/model">
+  <div class="card">
+    <div class="row">
+      <div class="field">
+        <label for="provider">Поставщик</label>
+        <select id="provider" name="provider">
+          <option value="openai" {{if eq .Bot.Provider "openai"}}selected{{end}}>OpenAI и совместимые</option>
+          <option value="anthropic" {{if eq .Bot.Provider "anthropic"}}selected{{end}}>Anthropic</option>
+        </select>
+        <div class="field__hint">Совместимые — это Ollama, vLLM, LM Studio, OpenRouter и свой сервер.</div>
+      </div>
+      <div class="field">
+        <label for="model">Модель</label>
+        <input id="model" type="text" name="model" value="{{.Bot.Model}}" placeholder="gpt-5-nano">
+      </div>
+    </div>
+    <div class="field">
+      <label for="base_url">Адрес поставщика модели</label>
+      <input id="base_url" type="text" name="base_url" value="{{.Bot.BaseURL}}" placeholder="http://localhost:11434/v1">
+      <div class="field__hint">Пусто — берётся адрес поставщика по умолчанию.</div>
+    </div>
+    <div class="field">
+      <label for="api_key">Ключ поставщика модели</label>
+      <input id="api_key" type="password" name="api_key" autocomplete="off"
+             placeholder="{{if .Bot.APIKey}}сохранён, оставьте пустым{{else}}не задан{{end}}">
+      <div class="field__hint">Пустое поле не стирает сохранённый ключ. Своей ЛЛМ на localhost ключ обычно не нужен.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Ручки</h2>
+    <div class="row">
+      <div class="field">
+        <label for="max_tokens">Потолок ответа, токенов</label>
+        <input id="max_tokens" type="number" name="max_tokens" value="{{.Bot.MaxTokens}}" min="100" max="32000">
+      </div>
+      {{if or (not .Probed) .Caps.Temperature}}
+      <div class="field">
+        <label for="temperature">Температура</label>
+        <input id="temperature" type="text" name="temperature" value="{{.Bot.Temperature}}" placeholder="0.7">
+        {{if not .Probed}}<div class="field__hint">Проверьте модель: не все её принимают.</div>{{end}}
+      </div>
+      {{end}}
+      {{if or (not .Probed) .Caps.ReasoningEffort}}
+      <div class="field">
+        <label for="reasoning">Усилие рассуждения</label>
+        <select id="reasoning" name="reasoning">
+          <option value="" {{if eq .Bot.Reasoning ""}}selected{{end}}>по умолчанию</option>
+          <option value="low" {{if eq .Bot.Reasoning "low"}}selected{{end}}>низкое, дешевле и быстрее</option>
+          <option value="medium" {{if eq .Bot.Reasoning "medium"}}selected{{end}}>среднее</option>
+          <option value="high" {{if eq .Bot.Reasoning "high"}}selected{{end}}>высокое</option>
+        </select>
+      </div>
+      {{end}}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Цена</h2>
+    <div class="row">
+      <div class="field">
+        <label for="price_in">Ввод, копеек за миллион токенов</label>
+        <input id="price_in" type="number" name="price_in" value="{{.Bot.PriceIn}}" min="0">
+      </div>
+      <div class="field">
+        <label for="price_out">Вывод, копеек за миллион</label>
+        <input id="price_out" type="number" name="price_out" value="{{.Bot.PriceOut}}" min="0">
+        <div class="field__hint">Рассуждение оплачивается как вывод: его не видно в ответе, но оно в счёте.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="formbar"><button class="btn" type="submit">Сохранить</button></div>
+</form>
+
+{{template "foot" .}}

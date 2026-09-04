@@ -1,0 +1,59 @@
+{{template "head" .}}
+{{template "bothead" .}}
+
+<p class="lede" style="max-width:62ch">
+  Откуда бот берёт настоящие данные вместо догадок. Без подключений он отвечает
+  только тем, что написано в инструкциях.
+</p>
+
+{{if .Checked}}
+<div class="notice notice--{{if eq .Checked "ок"}}ok{{else}}bad{{end}}">
+  <b>{{if eq .Checked "ок"}}Подключение отвечает{{else}}Подключение не отвечает{{end}}</b>
+  <div class="io" style="margin-top:8px">{{.CheckText}}</div>
+</div>
+{{end}}
+
+{{/* Два входа вместо выпадающего списка внутри формы: вид подключения
+     выбирается до того, как человек увидит поля, и лишних полей на экране
+     не остаётся. */}}
+<div class="picker">
+  <a class="picker__card" href="/bots/{{.Bot.ID}}/connections/new?kind=http">
+    <b>Свой API</b>
+    <span>Бот дёргает ваш адрес и отвечает тем, что вернулось. Статус заказа, остаток, бронь.</span>
+  </a>
+  <a class="picker__card" href="/bots/{{.Bot.ID}}/connections/new?kind=sql">
+    <b>База данных</b>
+    <span>Бот сам пишет SELECT по разрешённым таблицам. Запись и удаление отклоняются.</span>
+  </a>
+</div>
+
+{{range .Tools}}
+<div class="card conn">
+  <div class="conn__row">
+    <span class="mono conn__name">{{.Name}}</span>
+    <span class="pill">{{if eq .Kind "http"}}свой API{{else}}база данных{{end}}</span>
+    {{if not .Enabled}}<span class="pill pill--off">выключено</span>{{end}}
+    <div class="conn__actions">
+      <form method="post" action="/bots/{{$.Bot.ID}}/connections/{{.ID}}/check">
+        <button class="btn btn--ghost btn--small" type="submit">Проверить</button>
+      </form>
+      <a class="btn btn--ghost btn--small" href="/bots/{{$.Bot.ID}}/connections/{{.ID}}">Изменить</a>
+      <form method="post" action="/bots/{{$.Bot.ID}}/connections/{{.ID}}/delete">
+        <button class="btn btn--danger btn--small" type="submit">Удалить</button>
+      </form>
+    </div>
+  </div>
+  <p class="conn__desc">{{.Description}}</p>
+  {{if eq .Kind "http"}}
+    <div class="io">{{.Method}} {{.URL}}</div>
+  {{else}}
+    <div class="io">{{.Driver}} · таблицы: {{.AllowedTables}} · не больше {{.RowLimit}} строк · только SELECT</div>
+  {{end}}
+</div>
+{{else}}
+<div class="card empty">
+  Подключений нет: бот отвечает только тем, что знает из инструкций.
+</div>
+{{end}}
+
+{{template "foot" .}}

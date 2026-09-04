@@ -1,0 +1,44 @@
+{{template "head" .}}
+{{template "bothead" .}}
+
+<form method="post" action="/bots/{{.Bot.ID}}/answers">
+  <div class="card">
+    <div class="field">
+      <label for="name">Название</label>
+      <input id="name" type="text" name="name" value="{{.Bot.Name}}" required>
+      <div class="field__hint">Видно посетителю в шапке окна.</div>
+    </div>
+    <div class="field">
+      <label for="instructions">Инструкции</label>
+      <textarea id="instructions" name="instructions" style="min-height:190px">{{.Bot.Instructions}}</textarea>
+      <div class="field__hint">
+        Кто бот, о чём говорит и чего не обещает. Правила про подключения Hark добавит сам.
+      </div>
+    </div>
+    <div class="field">
+      <label for="greeting">Первая реплика</label>
+      <input id="greeting" type="text" name="greeting" value="{{.Bot.Greeting}}">
+      <div class="field__hint">Появляется до того, как посетитель что-то напишет. Пусто — лента открывается чистой.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Когда звать человека</h2>
+    <div class="field" style="max-width:280px">
+      <label for="escalate_after">Сдаваться после скольких неудач</label>
+      <input id="escalate_after" type="number" name="escalate_after" value="{{.Bot.EscalateAfter}}" min="1" max="10">
+      <div class="field__hint">Бот и сам может позвать человека, когда не хватает данных или прав.</div>
+    </div>
+    <div class="field">
+      <label style="display:flex;gap:8px;align-items:center">
+        <input type="checkbox" name="enabled" style="width:auto" {{if .Bot.Enabled}}checked{{end}}>
+        Бот включён
+      </label>
+      <div class="field__hint">Выключенный бот не отвечает и не показывается на сайте.</div>
+    </div>
+  </div>
+
+  <div class="formbar"><button class="btn" type="submit">Сохранить</button></div>
+</form>
+
+{{template "foot" .}}
