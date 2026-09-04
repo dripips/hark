@@ -22,7 +22,7 @@ Die Anbieter sind sich uneinig darüber, was sie annehmen, und diese Uneinigkeit
 
 Also fragt Hark nach. Ein Knopf schickt einige winzige Anfragen und hält fest, was zurückkam:
 
-![Einstellungen nach der Prüfung](screenshots/02-bot.png)
+![Einstellungen nach der Prüfung](screenshots/11-model.png)
 
 Danach zeigen die Einstellungen nur noch die Regler, die dieses Modell wirklich annimmt. Nichts anderes wird angeboten, nichts Abgelehntes je gesendet.
 

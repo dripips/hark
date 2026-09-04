@@ -22,7 +22,7 @@ Providers disagree about what they accept, and the disagreement is not in the do
 
 So Hark asks. One button sends a few tiny requests and records what came back:
 
-![Model settings driven by the probe](screenshots/02-bot.png)
+![Model settings driven by the probe](screenshots/11-model.png)
 
 The settings then show only the knobs that model actually takes. Nothing else is offered, and nothing rejected is ever sent.
 
